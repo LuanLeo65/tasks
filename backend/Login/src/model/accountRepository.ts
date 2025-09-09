@@ -13,6 +13,10 @@ async function create(body: IAccount){
     return await Account.create(body)
 }
 
+async function findByEmail(email:string){
+    return await Account.findOne({where: { email: email}})
+}
+
 async function set(id:number, body:IAccount){
     const originalAccount = await Account.findByPk(id)
 
@@ -34,4 +38,4 @@ async function destroyAccount(id: number){
     return await Account.destroy({where: { id: id}})
 }
 
-export default { getOne, getAll, create, set, destroyAccount}
+export default { getOne, getAll, create, set, destroyAccount, findByEmail}

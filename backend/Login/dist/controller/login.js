@@ -18,11 +18,27 @@ function getAccounts(req, res, next) {
         try {
             const accounts = yield accountRepository_1.default.getAll();
             if (!accounts)
-                return res.status(404).json({ error: "Usuario nao encontrado" });
+                return res.status(404).json({ error: "Nenhum usuario encontrado" });
             return res.status(200).json(accounts);
         }
         catch (error) {
             console.log("Ërro ao chamar getAccounts:" + error);
+        }
+    });
+}
+function getOneAccount(req, res, next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const id = parseInt(req.params.id);
+            if (!id)
+                return res.status(400).json({ error: "Id invalido" });
+            const account = yield accountRepository_1.default.getOne(id);
+            if (!account)
+                return res.status(404).json({ error: "Usuario nao encontrado" });
+            return res.status(200).json(account);
+        }
+        catch (error) {
+            console.log("Ërro ao chamar getOneAccount:" + error);
         }
     });
 }
@@ -40,6 +56,23 @@ function addAccount(req, res, next) {
         }
     });
 }
+function setAccount(req, res, next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const id = parseInt(req.params.id);
+            if (!id)
+                return res.status(400).json({ error: "Id invalido" });
+            const payloadUpdated = req.body;
+            if (!payloadUpdated)
+                return res.status(400).json({ error: "Preencha os campos corretamente" });
+            yield accountRepository_1.default.set(id, payloadUpdated);
+            return res.status(200).json(`Usuário alterado com sucesso!`);
+        }
+        catch (error) {
+            console.log("Ërro ao chamar setAccount:" + error);
+        }
+    });
+}
 function deleteAccount(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -54,4 +87,4 @@ function deleteAccount(req, res, next) {
         }
     });
 }
-exports.default = { getAccounts, addAccount, deleteAccount };
+exports.default = { getAccounts, addAccount, deleteAccount, setAccount, getOneAccount };
