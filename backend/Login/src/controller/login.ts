@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import repository from "../model/accountRepository";
+import auth from "../auth";
 
 async function getAccounts(req: Request, res: Response, next:any) {
     try {
@@ -31,8 +32,12 @@ async function addAccount(req: Request, res: Response, next:any){
     try {
         const payload = req.body
         if(!payload) return res.status(400).json({error: "Preencha os campos corretamente"})
-        
+
+        const hash = auth.hash(payload.password)
+        payload.password= hash
+
         const account = await repository.create(payload)
+        account.password = ""
 
         return res.status(201).json(account)
 
@@ -48,8 +53,14 @@ async function setAccount(req:Request, res: Response, next:any){
         
         const payloadUpdated = req.body
         if(!payloadUpdated) return res.status(400).json({error: "Preencha os campos corretamente"})
+        
+        if(payloadUpdated.password){
+         const hash =  auth.hash(payloadUpdated.password)
+         payloadUpdated.password = hash
+        }
 
-        await repository.set(id, payloadUpdated)
+        const updatedAccount = await repository.set(id, payloadUpdated)
+        if(!updatedAccount) return res.status(404).json({error: "Usuario nao encontrado"})
 
         return res.status(200).json(`Usuário alterado com sucesso!`)
     } catch (error) {

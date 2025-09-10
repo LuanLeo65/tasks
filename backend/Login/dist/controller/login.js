@@ -13,6 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const accountRepository_1 = __importDefault(require("../model/accountRepository"));
+const auth_1 = __importDefault(require("../auth"));
 function getAccounts(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -48,7 +49,10 @@ function addAccount(req, res, next) {
             const payload = req.body;
             if (!payload)
                 return res.status(400).json({ error: "Preencha os campos corretamente" });
+            const hash = auth_1.default.hash(payload.password);
+            payload.password = hash;
             const account = yield accountRepository_1.default.create(payload);
+            account.password = "";
             return res.status(201).json(account);
         }
         catch (error) {
@@ -65,7 +69,13 @@ function setAccount(req, res, next) {
             const payloadUpdated = req.body;
             if (!payloadUpdated)
                 return res.status(400).json({ error: "Preencha os campos corretamente" });
-            yield accountRepository_1.default.set(id, payloadUpdated);
+            if (payloadUpdated.password) {
+                const hash = auth_1.default.hash(payloadUpdated.password);
+                payloadUpdated.password = hash;
+            }
+            const updatedAccount = yield accountRepository_1.default.set(id, payloadUpdated);
+            if (!updatedAccount)
+                return res.status(404).json({ error: "Usuario nao encontrado" });
             return res.status(200).json(`Usuário alterado com sucesso!`);
         }
         catch (error) {
