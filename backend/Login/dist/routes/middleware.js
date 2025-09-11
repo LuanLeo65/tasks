@@ -11,4 +11,7 @@ function validateAccountSchema(req, res, next) {
 function validateAccountUpdateSchema(req, res, next) {
     return auth_1.default.validateSchema(accountsSchema_1.accountUpdateSchema, req, res, next);
 }
-exports.default = { validateAccountSchema, validateAccountUpdateSchema };
+function validateAccountLoginSchema(req, res, next) {
+    return auth_1.default.validateSchema(accountsSchema_1.accountLoginSchema, req, res, next);
+}
+exports.default = { validateAccountSchema, validateAccountUpdateSchema, validateAccountLoginSchema };

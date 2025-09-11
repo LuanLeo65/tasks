@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import repository from "../model/accountRepository";
+import repository from "../model/account/accountRepository";
 import auth from "../auth";
 
 async function getAccounts(req: Request, res: Response, next:any) {
@@ -82,5 +82,31 @@ async function deleteAccount(req: Request, res: Response, next:any){
     }
 }
 
+async function login(req: Request, res: Response, next:any) {
+    try {
+        const payload = req.body
+        if(!payload) return res.status(400).json({error: "Preencha os campos corretamente"})
 
-export default {getAccounts, addAccount, deleteAccount, setAccount, getOneAccount}
+        const account = await repository.findByEmail(payload.email)
+
+        if(account !== null){
+            const comparePassword = auth.compareHash(payload.password, account.password)
+            if(comparePassword){
+               const token = auth.signJWT(account.id)
+               const refresh = auth.refreshJWT(account.id)
+
+               
+                return res.status(200).json({message: `Usuario ${account.name} logado com sucesso!`, token: token, userId: account.id})
+            }
+
+            return res.status(400).json({error: 'Usuario ou senha invalidos'})
+        }
+                
+        return res.status(400).json({error: 'Usuario ou senha invalidos'})
+
+    } catch (error) {
+        console.log("Ërro ao chamar login:" + error)      
+    }
+}
+
+export default {getAccounts, addAccount, deleteAccount, setAccount, getOneAccount, login}

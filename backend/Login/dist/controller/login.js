@@ -97,4 +97,26 @@ function deleteAccount(req, res, next) {
         }
     });
 }
-exports.default = { getAccounts, addAccount, deleteAccount, setAccount, getOneAccount };
+function login(req, res, next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const payload = req.body;
+            if (!payload)
+                return res.status(400).json({ error: "Preencha os campos corretamente" });
+            const account = yield accountRepository_1.default.findByEmail(payload.email);
+            if (account !== null) {
+                const comparePassword = auth_1.default.compareHash(payload.password, account.password);
+                if (comparePassword) {
+                    const token = auth_1.default.signJWT(account.id);
+                    return res.status(200).json({ message: `Usuario ${account.name} logado com sucesso!`, token: token, userId: account.id });
+                }
+                return res.status(400).json({ error: 'Usuario ou senha invalidos' });
+            }
+            return res.status(400).json({ error: 'Usuario ou senha invalidos' });
+        }
+        catch (error) {
+            console.log("Ërro ao chamar login:" + error);
+        }
+    });
+}
+exports.default = { getAccounts, addAccount, deleteAccount, setAccount, getOneAccount, login };

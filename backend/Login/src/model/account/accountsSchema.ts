@@ -53,4 +53,17 @@ const accountUpdateSchema = Joi.object({
             
 })
 
-export { accountSchema, accountUpdateSchema }
+const accountLoginSchema = Joi.object({
+    email: Joi.string()
+            .email()
+            .min(8)
+            .max(50)
+            .required(),
+
+    password: Joi.string()
+            .min(6)
+            .max(20)
+            .required(),     
+})
+
+export { accountSchema, accountUpdateSchema, accountLoginSchema }

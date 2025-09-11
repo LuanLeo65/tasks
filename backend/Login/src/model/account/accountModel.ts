@@ -1,4 +1,4 @@
-import database from "../db";
+import database from "../../db";
 import { IAccount } from "./account";
 import { Optional, Model, DataTypes } from "sequelize";
 

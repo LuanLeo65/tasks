@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { accountSchema, accountUpdateSchema } from "../model/accountsSchema";
+import { accountSchema, accountUpdateSchema, accountLoginSchema } from "../model/account/accountsSchema";
 import auth from "../auth";
 
 
@@ -12,5 +12,10 @@ function validateAccountUpdateSchema(req:Request, res: Response, next: any) {
 
 }
 
+function validateAccountLoginSchema(req:Request, res: Response, next: any) {
+    return auth.validateSchema(accountLoginSchema, req, res, next)
 
-export default { validateAccountSchema, validateAccountUpdateSchema }
+}
+
+
+export default { validateAccountSchema, validateAccountUpdateSchema, validateAccountLoginSchema }
