@@ -12,7 +12,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const accountRepository_1 = __importDefault(require("../model/accountRepository"));
+const accountRepository_1 = __importDefault(require("../model/account/accountRepository"));
+const refreshRepository_1 = __importDefault(require("../model/refreshToken/refreshRepository"));
 const auth_1 = __importDefault(require("../auth"));
 function getAccounts(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -24,6 +25,7 @@ function getAccounts(req, res, next) {
         }
         catch (error) {
             console.log("Ërro ao chamar getAccounts:" + error);
+            res.sendStatus(500);
         }
     });
 }
@@ -40,6 +42,7 @@ function getOneAccount(req, res, next) {
         }
         catch (error) {
             console.log("Ërro ao chamar getOneAccount:" + error);
+            res.sendStatus(500);
         }
     });
 }
@@ -57,6 +60,7 @@ function addAccount(req, res, next) {
         }
         catch (error) {
             console.log("Ërro ao chamar addAccount:" + error);
+            res.sendStatus(500);
         }
     });
 }
@@ -80,6 +84,7 @@ function setAccount(req, res, next) {
         }
         catch (error) {
             console.log("Ërro ao chamar setAccount:" + error);
+            res.sendStatus(500);
         }
     });
 }
@@ -89,11 +94,12 @@ function deleteAccount(req, res, next) {
             const id = parseInt(req.params.id);
             if (!id)
                 return res.status(400).json({ error: "Id invalido" });
-            yield accountRepository_1.default.destroyAccount(id);
+            yield accountRepository_1.default.deleteById(id);
             return res.status(200).json({ message: "Usuario deletado com sucesso!" });
         }
         catch (error) {
             console.log("Ërro ao chamar deleteAccount:" + error);
+            res.sendStatus(500);
         }
     });
 }
@@ -108,6 +114,9 @@ function login(req, res, next) {
                 const comparePassword = auth_1.default.compareHash(payload.password, account.password);
                 if (comparePassword) {
                     const token = auth_1.default.signJWT(account.id);
+                    const refresh = auth_1.default.refreshJWT(account.id);
+                    yield refreshRepository_1.default.addRefreshToken(account.id, refresh);
+                    res.cookie("refreshToken", refresh, { httpOnly: true, secure: false });
                     return res.status(200).json({ message: `Usuario ${account.name} logado com sucesso!`, token: token, userId: account.id });
                 }
                 return res.status(400).json({ error: 'Usuario ou senha invalidos' });
@@ -116,7 +125,46 @@ function login(req, res, next) {
         }
         catch (error) {
             console.log("Ërro ao chamar login:" + error);
+            res.sendStatus(500);
         }
     });
 }
-exports.default = { getAccounts, addAccount, deleteAccount, setAccount, getOneAccount, login };
+function logout(req, res, next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const id = parseInt(req.params.id);
+            if (!id)
+                return res.json({ erro: "id invalido" });
+            yield refreshRepository_1.default.deleteById(id);
+            res.status(200).json({ token: null });
+        }
+        catch (error) {
+            console.log("Ërro ao chamar logout:" + error);
+            res.sendStatus(500);
+        }
+    });
+}
+function refresh(req, res, next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const refreshToken = req.cookies.refreshToken;
+        if (!refreshToken)
+            return res.sendStatus(403);
+        const refreshDb = yield refreshRepository_1.default.getRefreshToken(refreshToken);
+        if (!refreshDb)
+            return res.sendStatus(403);
+        if (refreshDb.expires_At < new Date()) {
+            yield refreshRepository_1.default.deleteByToken(refreshDb.token);
+            return res.status(403).json({ error: "Refresh token expirado!" });
+        }
+        try {
+            const user = yield auth_1.default.verifyRefreshToken(refreshToken);
+            const newToken = auth_1.default.signJWT(user.userId);
+            res.json({ token: newToken, user: { id: user.userId } });
+        }
+        catch (error) {
+            console.log("Ërro ao chamar refresh:" + error);
+            res.sendStatus(500);
+        }
+    });
+}
+exports.default = { getAccounts, addAccount, deleteAccount, setAccount, getOneAccount, login, logout, refresh };

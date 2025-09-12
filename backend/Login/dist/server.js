@@ -14,11 +14,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const app_1 = __importDefault(require("./app"));
 const db_1 = __importDefault(require("./db"));
+const association_1 = require("./model/association");
 (() => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const PORT = parseInt(`${process.env.PORT}`);
         yield db_1.default.sync();
         console.log(`Conectado ao banco ${process.env.DB_NAME}`);
+        (0, association_1.setupAssociations)();
         yield app_1.default.listen(PORT);
         console.log(`Rodando na porta ${process.env.PORT}`);
     }

@@ -11,6 +11,7 @@ const privateKey = fs_1.default.readFileSync(path_1.default.join(__dirname, "../
 const publicKey = fs_1.default.readFileSync(path_1.default.join(__dirname, "../keys/public.key"), "utf8");
 const jwtAlgorithm = "RS256";
 const refreshAlgorith = "HS256";
+const refreshKey = `${process.env.REFRESH_KEY}`;
 const saltRounds = parseInt(`${process.env.SALT_ROUNDS}`);
 function hash(password) {
     return bcrypt_1.default.hashSync(password, saltRounds);
@@ -20,11 +21,11 @@ function compareHash(password, hasPassword) {
 }
 function signJWT(userId) {
     const payload = { userId };
-    return jsonwebtoken_1.default.sign(payload, privateKey, { expiresIn: `10min`, algorithm: jwtAlgorithm });
+    return jsonwebtoken_1.default.sign(payload, privateKey, { expiresIn: `15m`, algorithm: jwtAlgorithm });
 }
 function refreshJWT(userId) {
     const payload = { userId };
-    return jsonwebtoken_1.default.sign(payload, privateKey, { expiresIn: `7d`, algorithm: refreshAlgorith });
+    return jsonwebtoken_1.default.sign(payload, refreshKey, { expiresIn: `7d`, algorithm: refreshAlgorith });
 }
 function verifyJWT(req, res, next) {
     try {
@@ -41,6 +42,9 @@ function verifyJWT(req, res, next) {
         res.sendStatus(401);
     }
 }
+function verifyRefreshToken(token) {
+    return jsonwebtoken_1.default.verify(token, refreshKey, { algorithms: [refreshAlgorith] });
+}
 function validateSchema(schema, req, res, next) {
     const { error } = schema.validate(req.body);
     if (error == null)
@@ -49,4 +53,4 @@ function validateSchema(schema, req, res, next) {
     const message = details.map((item) => item.message).join(",");
     return res.status(422).json({ error: req.body, message });
 }
-exports.default = { validateSchema, compareHash, hash, signJWT, verifyJWT };
+exports.default = { validateSchema, compareHash, hash, signJWT, verifyJWT, refreshJWT, verifyRefreshToken };

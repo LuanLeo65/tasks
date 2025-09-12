@@ -4,6 +4,7 @@ import bcrypt from "bcrypt"
 import fs from "fs"
 import path from "path"
 import jwt from "jsonwebtoken"
+import { IRefresh } from "./model/refreshToken/refresh"
 
 const privateKey = fs.readFileSync(path.join(__dirname, "../keys/private.key"), "utf8")
 const publicKey = fs.readFileSync(path.join(__dirname, "../keys/public.key"), "utf8")
@@ -23,7 +24,7 @@ function compareHash(password:string, hasPassword:string){
 
 function signJWT(userId:number) {
     const payload ={userId}
-    return jwt.sign(payload, privateKey, {expiresIn: `10min`, algorithm: jwtAlgorithm})
+    return jwt.sign(payload, privateKey, {expiresIn: `15m`, algorithm: jwtAlgorithm})
 }
 
 function refreshJWT(userId:number) {
@@ -51,7 +52,7 @@ function verifyJWT(req:Request, res: Response, next: any){
 }
 
 function verifyRefreshToken(token:string){
-    return jwt.verify(token, refreshKey, {algorithms: [refreshAlgorith]})
+    return jwt.verify(token, refreshKey, {algorithms: [refreshAlgorith]}) as IRefresh
 }
 
 

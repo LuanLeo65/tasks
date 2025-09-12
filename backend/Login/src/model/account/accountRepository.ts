@@ -34,8 +34,8 @@ async function set(id:number, body:IAccount){
     return null
 }
 
-async function destroyAccount(id: number){
+async function deleteById(id: number){
     return await Account.destroy({where: { id: id}})
 }
 
-export default { getOne, getAll, create, set, destroyAccount, findByEmail}
+export default { getOne, getAll, create, set, deleteById, findByEmail}
