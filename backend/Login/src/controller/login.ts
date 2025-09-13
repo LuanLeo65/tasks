@@ -6,7 +6,7 @@ import auth from "../auth";
 async function getAccounts(req: Request, res: Response, next:any) {
     try {
         const accounts = await accountRepository.getAll()
-        if(!accounts) return res.status(404).json({error: "Nenhum usuario encontrado"})
+        if(accounts.length === 0) return res.status(404).json({error: "Nenhum usuario encontrado"})
 
         return res.status(200).json(accounts)
     } catch (error) {
@@ -69,7 +69,7 @@ async function setAccount(req:Request, res: Response, next:any){
         const updatedAccount = await accountRepository.set(id, payloadUpdated)
         if(!updatedAccount) return res.status(404).json({error: "Usuario nao encontrado"})
 
-        return res.status(200).json(`Usuário alterado com sucesso!`)
+        return res.status(200).json(`Usuário ${updatedAccount.name} alterado com sucesso!` )
     } catch (error) {
         console.log("Ërro ao chamar setAccount:" + error)
         res.sendStatus(500)      
@@ -127,7 +127,7 @@ async function login(req: Request, res: Response, next:any) {
 async function logout(req: Request, res: Response, next:any){
     try {
         const id = parseInt(req.params.id)
-        if(!id) return res.json({erro: "id invalido"})
+        if(!id) return res.status(400).json({error: "id invalido"})
         
         
         await refreshRepository.deleteById(id)
@@ -155,7 +155,7 @@ async function refresh(req: Request, res: Response, next:any){
             const user = await auth.verifyRefreshToken(refreshToken)
 
             const newToken = auth.signJWT(user.userId)
-            res.json({token: newToken, user: {id: user.userId}})
+            res.status(200).json({token: newToken, user: {id: user.userId}})
 
         } catch (error) {
             console.log("Ërro ao chamar refresh:" + error)      

@@ -38,4 +38,8 @@ async function deleteById(id: number){
     return await Account.destroy({where: { id: id}})
 }
 
-export default { getOne, getAll, create, set, deleteById, findByEmail}
+async function deleteByEmail(email: string){
+    return await Account.destroy({where: { email: email}})
+}
+
+export default { getOne, getAll, create, set, deleteById, findByEmail, deleteByEmail}
