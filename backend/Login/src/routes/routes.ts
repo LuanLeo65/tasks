@@ -2,7 +2,6 @@ import { Router } from "express";
 import loginController from "../controller/login"
 import middleware from "./middleware";
 
-
 const route = Router()
 
 route.get("/accounts", middleware.validateAuthentication, loginController.getAccounts)

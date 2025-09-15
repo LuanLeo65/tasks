@@ -21,20 +21,19 @@ async function getTasks(req: Request, res: Response, next: any) {
   }
 }
 
-async function getTaskComments(req: Request, res: Response, next: any){
+async function getTaskComments(req: Request, res: Response, next: any) {
   try {
-    const id = parseInt(req.params.id)
+    const id = parseInt(req.params.id);
     if (!id) {
       res.status(400).json({ erro: "Id invalido" });
-      return
+      return;
     }
 
-    const taskComments = await repository.findByTask(id)
-    if(taskComments === null) {
-      return res.status(404).json({erro: "Task nao encontrada"})
+    const taskComments = await repository.findByTask(id);
+    if (taskComments === null) {
+      return res.status(404).json({ erro: "Task nao encontrada" });
     }
-    return res.status(200).json(taskComments)
-
+    return res.status(200).json(taskComments);
   } catch (error) {
     console.log(error);
     res.status(500).json({ erro: "Ocorreu um erro ao procurar a tasks" });
@@ -46,17 +45,16 @@ async function getTask(req: Request, res: Response, next: any) {
     const id = parseInt(req.params.id);
     if (!id) {
       res.status(400).json({ erro: "Id invalido" });
-      return
+      return;
     }
 
     const task = await repository.findById(id);
 
-    if(task === null){
-      return res.status(404).json({erro: 'Task nao encontrada'})
-    } else{
-       return res.status(200).json(task);
+    if (task === null) {
+      return res.status(404).json({ erro: "Task nao encontrada" });
+    } else {
+      return res.status(200).json(task);
     }
-
   } catch (error) {
     console.log(error);
     res.status(500).json({ erro: "Ocorreu um erro ao procurar a tasks" });
@@ -64,11 +62,20 @@ async function getTask(req: Request, res: Response, next: any) {
 }
 async function addTask(req: Request, res: Response, next: any) {
   try {
+    const { userId } = res.locals.payload;
+    if (!userId) return res.sendStatus(401);
+
+    const { name } = res.locals.payload;
+    if (!name) return res.sendStatus(401);
+
     const taskInfo = req.body as ITask;
     if (!taskInfo) {
       res.status(400).json({ erro: "Nao foi possivel criar a conta" });
       return;
     }
+
+    taskInfo.userId = userId;
+    taskInfo.author = name;
 
     const taskCreated = await repository.create(taskInfo);
 
@@ -84,7 +91,7 @@ async function setTask(req: Request, res: Response, next: any) {
     const id = parseInt(req.params.id);
     if (!id) {
       res.status(400).json({ erro: "Id invalido" });
-      return
+      return;
     }
 
     const taskParams = req.body as ITask;
@@ -95,12 +102,11 @@ async function setTask(req: Request, res: Response, next: any) {
 
     const taskUpdated = await repository.set(id, taskParams);
 
-    if(taskUpdated === null){
-      return res.status(404).json({erro: "Task nao encontrada"})
+    if (taskUpdated === null) {
+      return res.status(404).json({ erro: "Task nao encontrada" });
     }
 
     return res.status(200).json(taskUpdated);
-
   } catch (error) {
     console.log(error);
     res.status(500).json({ erro: "Ocorreu um erro ao atualizar a task" });
@@ -112,17 +118,23 @@ async function deleteTask(req: Request, res: Response, next: any) {
     const id = parseInt(req.params.id);
     if (!id) {
       res.status(400).json({ erro: "Id invalido" });
-      return 
+      return;
     }
 
     await repository.deleteById(id);
 
-    return res.sendStatus(204)
+    return res.sendStatus(204);
   } catch (error) {
     console.log(error);
     res.status(500).json({ erro: "Ocorreu um erro ao deletar a task" });
   }
 }
 
-
-export default { getTasks, addTask, getTask, setTask, deleteTask, getTaskComments };
+export default {
+  getTasks,
+  addTask,
+  getTask,
+  setTask,
+  deleteTask,
+  getTaskComments,
+};

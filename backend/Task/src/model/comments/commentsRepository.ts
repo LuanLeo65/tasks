@@ -3,47 +3,49 @@ import Comment, { ICommentsModel } from "./commentsModel";
 import { IComments } from "./comments";
 import Task from "../task/taskModel";
 
-
-async function findAll(){
-    const comments = await Comment.findAll()
-    return comments
+async function findAll() {
+  const comments = await Comment.findAll();
+  return comments;
 }
 
-async function findAllbyTask(taskId:number) {
-    await Task.findByPk(taskId)
-    const comments = await Comment.findAll({where: {taskId: taskId}})
+async function findAllbyTask(taskId: number) {
+  await Task.findByPk(taskId);
+  const comments = await Comment.findAll({ where: { taskId: taskId } });
 
-    return comments
+  return comments;
 }
 
+async function addComment(taskId: number, comment: IComments) {
+  const task = await Task.findByPk(taskId);
+  if (!task) {
+    throw new Error("Task nao encontrada");
+  }
+  const comments = await Comment.create({ ...comment, taskId });
 
-async function addComment(taskId: number, comment: IComments){
-    const task = await Task.findByPk(taskId)
-    if(!task) {
-        throw new Error('Task nao encontrada')
-        
-    }
-    const comments = await Comment.create( {...comment, taskId})
-
-    return comments
+  return comments;
 }
-async function setComment(idComment:number, comment: IComments){
-    const originalComment = await Comment.findByPk<ICommentsModel>(idComment)
-    if(originalComment !== null) {
-        if(comment.author) originalComment.author = comment.author
+async function setComment(idComment: number, comment: IComments) {
+  const originalComment = await Comment.findByPk<ICommentsModel>(idComment);
+  if (originalComment !== null) {
+    if (comment.author) originalComment.author = comment.author;
 
-        if(comment.comment) originalComment.comment = comment.comment
+    if (comment.comment) originalComment.comment = comment.comment;
 
-        await originalComment.save()
+    await originalComment.save();
 
-        return originalComment
-    }
+    return originalComment;
+  }
 
-    return null
-    
+  return null;
 }
 
-async function deleteComment(commentId: number){
-    return Comment.destroy({where: {id: commentId}})
+async function deleteComment(commentId: number) {
+  return Comment.destroy({ where: { id: commentId } });
 }
-export default { findAll, addComment, findAllbyTask, deleteComment, setComment}
+export default {
+  findAll,
+  addComment,
+  findAllbyTask,
+  deleteComment,
+  setComment,
+};

@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES6",
-    "types": ["jest"],
     "module": "commonjs",
+    "types": ["node", "jest", "sequelize"],
     "moduleResolution": "node",
     "baseUrl": ".",  
     "rootDir": "./src",

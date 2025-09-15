@@ -17,4 +17,9 @@ function validateAccountLoginSchema(req, res, next) {
 function validateAuthentication(req, res, next) {
     return auth_1.default.verifyJWT(req, res, next);
 }
-exports.default = { validateAccountSchema, validateAccountUpdateSchema, validateAccountLoginSchema, validateAuthentication };
+exports.default = {
+    validateAccountSchema,
+    validateAccountUpdateSchema,
+    validateAccountLoginSchema,
+    validateAuthentication,
+};

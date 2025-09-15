@@ -19,21 +19,29 @@ function hash(password) {
 function compareHash(password, hasPassword) {
     return bcrypt_1.default.compareSync(password, hasPassword);
 }
-function signJWT(userId) {
-    const payload = { userId };
-    return jsonwebtoken_1.default.sign(payload, privateKey, { expiresIn: `15m`, algorithm: jwtAlgorithm });
+function signJWT(userId, name) {
+    const payload = { userId, name };
+    return jsonwebtoken_1.default.sign(payload, privateKey, {
+        expiresIn: `15m`,
+        algorithm: jwtAlgorithm,
+    });
 }
 function refreshJWT(userId) {
     const payload = { userId };
-    return jsonwebtoken_1.default.sign(payload, refreshKey, { expiresIn: `7d`, algorithm: refreshAlgorith });
+    return jsonwebtoken_1.default.sign(payload, refreshKey, {
+        expiresIn: `7d`,
+        algorithm: refreshAlgorith,
+    });
 }
 function verifyJWT(req, res, next) {
     try {
         const token = req.headers["x-access-token"];
         if (!token)
             return res.sendStatus(401);
-        const decoded = jsonwebtoken_1.default.verify(token, publicKey, { algorithms: [jwtAlgorithm] });
-        const payload = { userId: decoded.userId, jwt: token };
+        const decoded = jsonwebtoken_1.default.verify(token, publicKey, {
+            algorithms: [jwtAlgorithm],
+        });
+        const payload = { userId: decoded.userId, name: decoded.name, jwt: token };
         res.locals.payload = payload;
         next();
     }
@@ -43,7 +51,9 @@ function verifyJWT(req, res, next) {
     }
 }
 function verifyRefreshToken(token) {
-    return jsonwebtoken_1.default.verify(token, refreshKey, { algorithms: [refreshAlgorith] });
+    return jsonwebtoken_1.default.verify(token, refreshKey, {
+        algorithms: [refreshAlgorith],
+    });
 }
 function validateSchema(schema, req, res, next) {
     const { error } = schema.validate(req.body);
@@ -53,4 +63,12 @@ function validateSchema(schema, req, res, next) {
     const message = details.map((item) => item.message).join(",");
     return res.status(422).json({ error: req.body, message });
 }
-exports.default = { validateSchema, compareHash, hash, signJWT, verifyJWT, refreshJWT, verifyRefreshToken };
+exports.default = {
+    validateSchema,
+    compareHash,
+    hash,
+    signJWT,
+    verifyJWT,
+    refreshJWT,
+    verifyRefreshToken,
+};

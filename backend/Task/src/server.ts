@@ -9,7 +9,7 @@ import { setupAssociations } from "./model/association";
 
     await database.sync();
     console.log(`Rodando o banco de dados ${process.env.NAME_DB}`);
-    setupAssociations()
+    setupAssociations();
 
     await app.listen(port);
     console.log(`Rodando na porta ${port}`);

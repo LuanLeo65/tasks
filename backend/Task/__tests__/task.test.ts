@@ -1,4 +1,13 @@
-import { beforeAll, beforeEach, afterEach, afterAll, describe, it, expect, jest} from '@jest/globals'
+import {
+  beforeAll,
+  beforeEach,
+  afterEach,
+  afterAll,
+  describe,
+  it,
+  expect,
+  jest,
+} from "@jest/globals";
 import request from "supertest";
 import app from "../src/app";
 import repository from "../src/model/task/taskRepository";
@@ -262,4 +271,3 @@ describe("testando as tasks", () => {
     expect(result.status).toBe(500);
   });
 });
-

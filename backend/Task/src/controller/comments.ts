@@ -6,8 +6,10 @@ import { IComments } from "src/model/comments/comments";
 async function getAllComments(req: Request, res: Response, next: any) {
   try {
     const comments = await commentRepository.findAll();
-    if(comments.length === 0 || !comments){
-      return res.status(404).json({erro: 'Nao foi possivel encontrar nenhum comentario'})
+    if (comments.length === 0 || !comments) {
+      return res
+        .status(404)
+        .json({ erro: "Nao foi possivel encontrar nenhum comentario" });
     }
     return res.status(200).json(comments);
   } catch (error) {
@@ -27,8 +29,8 @@ async function getCommentsOfTask(req: Request, res: Response, next: any) {
     }
 
     const commentsTask = await commentRepository.findAllbyTask(id);
-    if(commentsTask.length === 0 || !commentsTask){
-      return res.status(404).json({erro: 'Task nao encontrada'})
+    if (commentsTask.length === 0 || !commentsTask) {
+      return res.status(404).json({ erro: "Task nao encontrada" });
     }
 
     return res.status(200).json(commentsTask);
@@ -48,12 +50,23 @@ async function addComment(req: Request, res: Response, next: any) {
       return;
     }
 
+    const { userId } = res.locals.payload;
+    if (!userId) return res.sendStatus(401);
+
+    const { name } = res.locals.payload;
+    if (!name) return res.sendStatus(401);
+
     const commentsParams = req.body;
     if (!commentsParams) {
       res.status(400).json({ erro: "Informações invalidas" });
       return;
     }
+
+    commentsParams.userId = userId;
+    commentsParams.author = name;
+
     const comment = await commentRepository.addComment(id, commentsParams);
+    console.log(comment);
 
     return res.status(201).json(comment);
   } catch (error: any) {
@@ -62,7 +75,7 @@ async function addComment(req: Request, res: Response, next: any) {
   }
 }
 
-async function deleteComment(req: Request, res: Response, next: any){
+async function deleteComment(req: Request, res: Response, next: any) {
   try {
     const id = parseInt(req.params.id);
     if (!id) {
@@ -70,42 +83,47 @@ async function deleteComment(req: Request, res: Response, next: any){
       return;
     }
 
-    
-    await commentRepository.deleteComment(id)
-  
+    await commentRepository.deleteComment(id);
 
-    return res.sendStatus(204)
-  } catch (error) {
-     console.log(error);
-    return res.status(500).json({ erro: "Erro ao deletar o comentario" });
-  }
-}
-
-async function setComment(req: Request, res: Response, next: any){
-  try {
-    const id = parseInt(req.params.id);
-    if (!id) {
-      res.status(400).json({ erro: "Id invalido" });
-      return;
-    }
-
-    const commentsParams = req.body as IComments
-    if(!commentsParams){
-      return res.status(400).json({erro: 'Informacoes invalidas'})
-    }
-
-    const commentUpdated = await commentRepository.setComment(id, commentsParams )
-    
-    if(commentUpdated === null){
-      return res.status(404).json({erro: "Comentario nao encontrado"})
-    }
-    return res.status(201).json(commentUpdated)
-
-
+    return res.sendStatus(204);
   } catch (error) {
     console.log(error);
     return res.status(500).json({ erro: "Erro ao deletar o comentario" });
   }
 }
 
-export default { addComment, getCommentsOfTask, getAllComments, deleteComment, setComment };
+async function setComment(req: Request, res: Response, next: any) {
+  try {
+    const id = parseInt(req.params.id);
+    if (!id) {
+      res.status(400).json({ erro: "Id invalido" });
+      return;
+    }
+
+    const commentsParams = req.body as IComments;
+    if (!commentsParams) {
+      return res.status(400).json({ erro: "Informacoes invalidas" });
+    }
+
+    const commentUpdated = await commentRepository.setComment(
+      id,
+      commentsParams
+    );
+
+    if (commentUpdated === null) {
+      return res.status(404).json({ erro: "Comentario nao encontrado" });
+    }
+    return res.status(201).json(commentUpdated);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ erro: "Erro ao deletar o comentario" });
+  }
+}
+
+export default {
+  addComment,
+  getCommentsOfTask,
+  getAllComments,
+  deleteComment,
+  setComment,
+};

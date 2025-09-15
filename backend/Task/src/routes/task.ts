@@ -2,31 +2,31 @@
 import { Router } from "express";
 import taskController from "../controller/task";
 import commentsController from "../controller/comments";
-import schemas from './middleware'
+import middlewares from './middleware'
 
 const router = Router();
 
 
-router.get("/task",taskController.getTasks);
+router.get("/task",middlewares.validateAuthentication, taskController.getTasks);
 
-router.get("/task/comments", commentsController.getAllComments);
+router.get("/task/comments",middlewares.validateAuthentication, commentsController.getAllComments);
 
-router.get('/task/details/:id', taskController.getTaskComments)
+router.get('/task/details/:id',middlewares.validateAuthentication, taskController.getTaskComments)
 
-router.get("/task/:id", taskController.getTask);
+router.get("/task/:id",middlewares.validateAuthentication, taskController.getTask);
 
-router.post("/task",schemas.validateTask, taskController.addTask);
+router.post("/task",middlewares.validateAuthentication, middlewares.validateTask, taskController.addTask);
 
-router.patch("/task/:id",schemas.validateTask ,taskController.setTask);
+router.patch("/task/:id",middlewares.validateAuthentication, middlewares.validateTask ,taskController.setTask);
 
-router.delete("/task/:id", taskController.deleteTask);
+router.delete("/task/:id",middlewares.validateAuthentication,  taskController.deleteTask);
 
-router.get("/task/:taskId/comments", commentsController.getCommentsOfTask);
+router.get("/task/:taskId/comments",middlewares.validateAuthentication,  commentsController.getCommentsOfTask);
 
-router.post("/task/:taskId/comments",schemas.validateComments ,commentsController.addComment);
+router.post("/task/:taskId/comments",middlewares.validateAuthentication, middlewares.validateComments ,commentsController.addComment);
 
-router.patch("/task/:id/comments", schemas.validateComments, commentsController.setComment)
+router.patch("/task/:id/comments",middlewares.validateAuthentication,  middlewares.validateComments, commentsController.setComment)
 
-router.delete("/task/comments/:id", commentsController.deleteComment)
+router.delete("/task/comments/:id",middlewares.validateAuthentication, commentsController.deleteComment)
 
 export default router;

@@ -24,7 +24,7 @@ function addRefreshToken(accountId, token) {
         const payload = {
             token: token,
             userId: accountId,
-            expires_At: new Date(Date.now() + sevenDays)
+            expires_At: new Date(Date.now() + sevenDays),
         };
         return yield refreshModel_1.default.create(payload);
     });

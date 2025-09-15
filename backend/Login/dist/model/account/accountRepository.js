@@ -56,4 +56,17 @@ function deleteById(id) {
         return yield accountModel_1.default.destroy({ where: { id: id } });
     });
 }
-exports.default = { getOne, getAll, create, set, deleteById, findByEmail };
+function deleteByEmail(email) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return yield accountModel_1.default.destroy({ where: { email: email } });
+    });
+}
+exports.default = {
+    getOne,
+    getAll,
+    create,
+    set,
+    deleteById,
+    findByEmail,
+    deleteByEmail,
+};

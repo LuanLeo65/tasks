@@ -1,5 +1,5 @@
 //model/taskModel.ts
-import { Optional, Model, DataTypes } from "sequelize";
+import { Model, DataTypes, Optional } from "sequelize";
 import { ITask } from "./task";
 import database from "../../db";
 
@@ -13,12 +13,20 @@ const Task = database.define<ITaskModel>("task", {
     autoIncrement: true,
     primaryKey: true,
   },
+  author: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
   title: {
     type: DataTypes.STRING,
     allowNull: false,
   },
   description: {
     type: DataTypes.STRING,
+    allowNull: false,
+  },
+  userId: {
+    type: DataTypes.INTEGER,
     allowNull: false,
   },
   status: {

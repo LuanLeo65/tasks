@@ -6,7 +6,7 @@ const userDb = process.env.DB_USER;
 const passwordDb = process.env.DB_PASSWORD;
 const hostDb = process.env.DB_HOSTDB;
 const database = new sequelize_1.Sequelize(nameDb, userDb, passwordDb, {
-    dialect: 'mysql',
-    host: hostDb
+    dialect: "mysql",
+    host: hostDb,
 });
 exports.default = database;

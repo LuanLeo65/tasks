@@ -9,7 +9,7 @@ const RefreshToken = db_1.default.define("refresh", {
     id: {
         type: sequelize_1.DataTypes.INTEGER,
         primaryKey: true,
-        autoIncrement: true
+        autoIncrement: true,
     },
     token: {
         type: sequelize_1.DataTypes.STRING(1000),
@@ -17,15 +17,15 @@ const RefreshToken = db_1.default.define("refresh", {
     },
     expires_At: {
         type: sequelize_1.DataTypes.DATE,
-        allowNull: false
+        allowNull: false,
     },
     userId: {
         type: sequelize_1.DataTypes.INTEGER,
         references: {
             model: "accounts",
-            key: "id"
+            key: "id",
         },
-        onDelete: "CASCADE"
-    }
+        onDelete: "CASCADE",
+    },
 });
 exports.default = RefreshToken;

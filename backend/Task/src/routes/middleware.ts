@@ -1,36 +1,18 @@
 import { Request, Response } from "express";
 import commentSchema from "../model/comments/commentsSchema";
 import taskSchema from "../model/task/taskSchema";
+import auth from "../auth";
 
 function validateTask(req: Request, res: Response, next: any) {
-  const { error } = taskSchema.validate(req.body);
-
-  if (error == null) return next();
-
-  const { details } = error;
-  const message = details.map((item) => item.message).join(",");
-
-  console.log(`validateTask: ${message}`);
-  return res.status(422).json({
-    error: req.body,
-    message,
-  });
+  return auth.validateSchemas(taskSchema, req, res, next);
 }
-
 
 function validateComments(req: Request, res: Response, next: any) {
-    const { error } = commentSchema.validate(req.body)
-    
-    if(error == null) return next()
-
-    const {details} = error
-    const message = details.map((item) => item.message).join(',')
-
-    console.log(`validateComments: ${message}`)
-    return res.status(422).json({
-        error: req.body,
-        message
-    })
+  return auth.validateSchemas(commentSchema, req, res, next);
 }
 
-export default {validateComments, validateTask}
+function validateAuthentication(req: Request, res: Response, next: any) {
+  return auth.verifyJWT(req, res, next);
+}
+
+export default { validateComments, validateTask, validateAuthentication };

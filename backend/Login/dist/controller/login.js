@@ -19,7 +19,7 @@ function getAccounts(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const accounts = yield accountRepository_1.default.getAll();
-            if (!accounts)
+            if (accounts.length === 0)
                 return res.status(404).json({ error: "Nenhum usuario encontrado" });
             return res.status(200).json(accounts);
         }
@@ -80,7 +80,9 @@ function setAccount(req, res, next) {
             const updatedAccount = yield accountRepository_1.default.set(id, payloadUpdated);
             if (!updatedAccount)
                 return res.status(404).json({ error: "Usuario nao encontrado" });
-            return res.status(200).json(`Usuário alterado com sucesso!`);
+            return res
+                .status(200)
+                .json(`Usuário ${updatedAccount.name} alterado com sucesso!`);
         }
         catch (error) {
             console.log("Ërro ao chamar setAccount:" + error);
@@ -113,15 +115,19 @@ function login(req, res, next) {
             if (account !== null) {
                 const comparePassword = auth_1.default.compareHash(payload.password, account.password);
                 if (comparePassword) {
-                    const token = auth_1.default.signJWT(account.id);
+                    const token = auth_1.default.signJWT(account.id, account.name);
                     const refresh = auth_1.default.refreshJWT(account.id);
                     yield refreshRepository_1.default.addRefreshToken(account.id, refresh);
                     res.cookie("refreshToken", refresh, { httpOnly: true, secure: false });
-                    return res.status(200).json({ message: `Usuario ${account.name} logado com sucesso!`, token: token, userId: account.id });
+                    return res.status(200).json({
+                        message: `Usuario ${account.name} logado com sucesso!`,
+                        token: token,
+                        userId: account.id,
+                    });
                 }
-                return res.status(400).json({ error: 'Usuario ou senha invalidos' });
+                return res.status(400).json({ error: "Usuario ou senha invalidos" });
             }
-            return res.status(400).json({ error: 'Usuario ou senha invalidos' });
+            return res.status(400).json({ error: "Usuario ou senha invalidos" });
         }
         catch (error) {
             console.log("Ërro ao chamar login:" + error);
@@ -134,7 +140,7 @@ function logout(req, res, next) {
         try {
             const id = parseInt(req.params.id);
             if (!id)
-                return res.json({ erro: "id invalido" });
+                return res.status(400).json({ error: "id invalido" });
             yield refreshRepository_1.default.deleteById(id);
             res.status(200).json({ token: null });
         }
@@ -158,8 +164,17 @@ function refresh(req, res, next) {
         }
         try {
             const user = yield auth_1.default.verifyRefreshToken(refreshToken);
-            const newToken = auth_1.default.signJWT(user.userId);
-            res.json({ token: newToken, user: { id: user.userId } });
+            const account = yield accountRepository_1.default.getOne(user.id);
+            if (!account)
+                return res.sendStatus(403);
+            const newToken = auth_1.default.signJWT(account.id, account.name);
+            res
+                .status(200)
+                .json({
+                token: newToken,
+                user: { id: user.userId },
+                name: { name: user.name },
+            });
         }
         catch (error) {
             console.log("Ërro ao chamar refresh:" + error);
@@ -167,4 +182,13 @@ function refresh(req, res, next) {
         }
     });
 }
-exports.default = { getAccounts, addAccount, deleteAccount, setAccount, getOneAccount, login, logout, refresh };
+exports.default = {
+    getAccounts,
+    addAccount,
+    deleteAccount,
+    setAccount,
+    getOneAccount,
+    login,
+    logout,
+    refresh,
+};

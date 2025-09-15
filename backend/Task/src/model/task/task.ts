@@ -1,7 +1,9 @@
 //mode/task.ts
 export interface ITask {
-    id: number,
-    title: string,
-    description: string,
-    status: string
+  id: number;
+  author: string;
+  title: string;
+  description: string;
+  userId: number;
+  status: string;
 }
