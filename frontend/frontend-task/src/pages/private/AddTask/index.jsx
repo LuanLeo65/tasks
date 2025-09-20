@@ -1,18 +1,22 @@
-import React, { useState } from "react";
-import Header from "../../components/header";
-import apiTask from "../../services/task";
-import { useNavigate, useParams } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import Header from "../../../components/header";
+import apiTask from "../../../services/task";
+import { useNavigate } from "react-router-dom";
+import auth from "../../../services/login";
 
-export default function SetTask() {
+export default function AddTask() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  const {id: taskId} = useParams()
-
   const navigate = useNavigate();
 
-  async function handleSetTask(e) {
+  if (!auth.isAuthenticated()) {
+    navigate('/login');
+    return;
+    }
+
+  async function handleAddTask(e) {
     e.preventDefault();
 
     const payload = {
@@ -26,26 +30,27 @@ export default function SetTask() {
     }
 
     try {
-      const set = await apiTask.setTask(taskId, payload);
-      setSuccessMessage("Tarefa alterada com sucesso");
+      const add = await apiTask.addTask(payload);
+      setSuccessMessage("Tarefa adicionada com sucesso");
 
       setTimeout(() => {
-        navigate(`/task/details/${taskId}`);
+        navigate("/task");
       }, 2000);
     } catch (error) {
-      console.log("Erro ao alterar uma tarefa:", error);
+      console.log("Erro ao adicionar uma tarefa:", error);
     }
   }
 
   return (
     <>
-      <div className="flex flex-col w-screen h-screen items-center bg-[#FFDFB9]">
+      <div className="flex flex-col w-screen h-screen items-center  bg-[#FFDFB9]">
         <Header />
 
         {successMessage ? (
           <p className="text-lg text-white mt-4 bg-green-500  rounded-2xl p-5 shadow-2xl">{successMessage}</p>
         ) : (
-          <form className="w-[90%] max-w-md mx-auto bg-white p-6 rounded-3xl shadow-lg mt-8 space-y-4 mb-6" onSubmit={handleSetTask}>
+ 
+          <form className="w-[90%] max-w-md mx-auto bg-white p-6 rounded-3xl shadow-lg mt-8 space-y-4 mb-6" onSubmit={handleAddTask}>
             <div>
               <label className="block mb-1 font-semibold text-gray-800">Assunto da Tarefa:</label>
               <input
@@ -68,10 +73,11 @@ export default function SetTask() {
             </div>
 
             <button type="submit" className="w-full py-2 text-white font-semibold bg-green-600 hover:bg-green-700 rounded-full transition">
-              Editar Tarefa
+             + Adicionar Tarefa
             </button>
-            <a href={`/task/details/${taskId}`} className="block text-center text-blue-600 hover:underline mt-2">Voltar</a>
+            <a href="/task" className="block text-center text-blue-600 hover:underline mt-2">Voltar</a>
           </form>
+          
         )}
       </div>
     </>

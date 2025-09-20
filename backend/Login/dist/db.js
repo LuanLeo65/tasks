@@ -4,7 +4,7 @@ const sequelize_1 = require("sequelize");
 const nameDb = process.env.DB_NAME;
 const userDb = process.env.DB_USER;
 const passwordDb = process.env.DB_PASSWORD;
-const hostDb = process.env.DB_HOSTDB;
+const hostDb = process.env.DB_HOST;
 const database = new sequelize_1.Sequelize(nameDb, userDb, passwordDb, {
     dialect: "mysql",
     host: hostDb,

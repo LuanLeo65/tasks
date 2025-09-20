@@ -1,13 +1,21 @@
 import { useParams, useNavigate } from "react-router-dom";
-import Header from "../../components/header";
-import apiTask from "../../services/task";
-import apiComment from "../../services/comment";
+import Header from "../../../components/header";
+import apiTask from "../../../services/task";
+import apiComment from "../../../services/comment";
 import { useEffect, useState } from "react";
+import auth from "../../../services/login";
 
 export default function Details() {
+  const [author, setAuthor] = useState();
+  const [id, setUserId] = useState();
   const [task, setTask] = useState();
   const { id: taskId } = useParams();
   const navigate = useNavigate();
+
+  if (!auth.isAuthenticated()) {
+    navigate('/login');
+    return;
+    }
 
   function handleNavigate(url) {
     return navigate(url);
@@ -25,10 +33,15 @@ export default function Details() {
   useEffect(() => {
     async function getTask(id) {
       try {
+        const userId = await auth.getId();
+        setUserId(userId)
+
         const taskDetails = await apiTask.getTaskDetails(id);
         setTask(taskDetails);
-        console.log("ID da task:", id);
-        console.log("DETALHES DA TASK:", taskDetails);
+
+        const getAuthor = await auth.getAuthor()
+        setAuthor(getAuthor)
+
       } catch (error) {
         console.log("Erro ao tentar exibir a task com detalhes", error);
       }
@@ -54,10 +67,11 @@ export default function Details() {
                 {task.description}
               </h3>
 
+              <h3><span className="font-bold"> Solicitado por:  </span>{task.author}</h3>
                <button
                 onClick={() => handleNavigate(`/task/set/${task.id}`)}
                 className="text-xs self-end px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-full shadow transition cursor-pointer mb-5"
-              >
+                >
                 Editar Tarefa
               </button>
             </div>
@@ -76,8 +90,9 @@ export default function Details() {
                     </p>
                     <div className="flex flex-row w-full justify-between items-center">
                       <p className="text-gray-800 break-all">{comment.comment}</p>
-                      <div className="flex gap-2 ">
-                        <button
+                       {comment.userId == id ? (
+                       <div className="flex gap-2 mx-2">
+                          <button
                           onClick={() =>
                             handleNavigate(
                               `/comment/set/${task.id}/${comment.id}`
@@ -95,6 +110,10 @@ export default function Details() {
                           ❌
                         </button>
                       </div>
+                          ) : ( 
+                          <div></div>
+                          )}
+                        
                     </div>
                   </div>
                 ))}
@@ -105,7 +124,7 @@ export default function Details() {
                 >
                   + Adicionar comentário
                 </button>
-                <a href="/" className="block text-center text-blue-600 hover:underline mt-2">Voltar</a>
+                <a href="/task" className="block text-center text-blue-600 hover:underline mt-2">Voltar</a>
               </div>
             ) : (
               <div className="flex flex-col">
@@ -119,7 +138,7 @@ export default function Details() {
                 >
                   + Adicionar comentário
                 </button>
-                <a href="/" className="block text-center text-blue-600 hover:underline mt-2">Voltar</a>
+                <a href="/task" className="block text-center text-blue-600 hover:underline mt-2">Voltar</a>
               </div> 
             )}
           </div>

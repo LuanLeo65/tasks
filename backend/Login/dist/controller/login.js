@@ -123,6 +123,7 @@ function login(req, res, next) {
                         message: `Usuario ${account.name} logado com sucesso!`,
                         token: token,
                         userId: account.id,
+                        name: account.name,
                     });
                 }
                 return res.status(400).json({ error: "Usuario ou senha invalidos" });

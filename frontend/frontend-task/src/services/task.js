@@ -31,4 +31,9 @@ async function getTaskDetails(id) {
  return result.data
 }
 
-export default { getAll, addTask, deleteTask, getTaskDetails, setTask };
+async function getUserTask(id) {
+  const result = await api.get(`userTask/${id}`);
+  return result.data;
+}
+
+export default { getAll, addTask, deleteTask, getTaskDetails, setTask, getUserTask };

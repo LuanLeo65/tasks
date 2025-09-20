@@ -20,6 +20,29 @@ async function getAllComments(req: Request, res: Response, next: any) {
   }
 }
 
+async function getAllUserComments(req: Request, res: Response, next: any) {
+  try {
+    const userId = parseInt(req.params.userId);
+    if (!userId) {
+      res.status(400).json({ erro: "Id de usuario invalido" });
+      return;
+    }
+
+    const userComments = await commentRepository.findByUser(userId);
+    if (userComments.length === 0 || !userComments) {
+      return res
+        .status(404)
+        .json({ erro: "Nao foi possivel encontrar nenhum comentario" });
+    }
+    return res.status(200).json(userComments);
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ erro: "Erro ao retornar todos os comentarios" });
+  }
+}
+
 async function getCommentsOfTask(req: Request, res: Response, next: any) {
   try {
     const id = parseInt(req.params.taskId);
@@ -126,4 +149,5 @@ export default {
   getAllComments,
   deleteComment,
   setComment,
+  getAllUserComments,
 };

@@ -116,6 +116,7 @@ async function login(req: Request, res: Response, next: any) {
           message: `Usuario ${account.name} logado com sucesso!`,
           token: token,
           userId: account.id,
+          name: account.name,
         });
       }
 

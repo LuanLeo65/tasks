@@ -23,4 +23,10 @@ async function deleteComment(id) {
   await api.delete(`/task/comments/${id}`)
 }
 
-export default { getAllComment, addComment, deleteComment, setComment };
+async function getAllUserComments(userId) {
+  const result = await api.get(`task/comments/${userId}`);
+
+  return result.data;
+}
+
+export default { getAllComment, addComment, deleteComment, setComment, getAllUserComments };

@@ -1,8 +1,9 @@
 //pages/dashboard/index.js
 import React, { useState, useEffect } from "react";
-import ApiTask from "../../services/task";
-import Header from "../../components/header";
+import ApiTask from "../../../services/task";
+import Header from "../../../components/header";
 import { useNavigate } from "react-router-dom";
+import auth from "../../../services/login";
 
 export default function Dashboard() {
   const [tasks, setTask] = useState([]);
@@ -11,6 +12,12 @@ export default function Dashboard() {
   function handleNavigate(url) {
     return navigate(url);
   }
+
+   if (!auth.isAuthenticated()) {
+        navigate('/login');
+        return;
+    }
+  
 
   async function handleDelete(id) {
     await ApiTask.deleteTask(id);
@@ -38,6 +45,7 @@ export default function Dashboard() {
       <div>
         {tasks && tasks.length > 0 ? (
           <>
+            <h1 className="text-center text-5xl text-[#A4193D] font-bold mb-10">Tarefas da Empresa</h1>
             <div className="flex justify-end w-300">
               <button
                 onClick={() => {
@@ -52,6 +60,7 @@ export default function Dashboard() {
               <table className="min-w-full text-sm text-left text-gray-700 bg-white">
                 <thead className="text-xs uppercase bg-gray-200 text-gray-600">
                   <tr>
+                    <th className="px-6 py-3 text-center">Numero</th>
                     <th className="px-6 py-3 ">Tarefa</th>
                     <th className="px-6 py-3 ">Descrição</th>
                     <th className="px-6 py-3 text-center ">Ações</th>
@@ -63,6 +72,9 @@ export default function Dashboard() {
                       key={index}
                       className="hover:bg-gray-100 transition-colors duration-200"
                     >
+                      <td className="px-2 py-4 w-10 truncate text-center">
+                        {task.id}
+                      </td>
                       <td className="px-6 py-4 max-w-[200px] truncate">
                         {task.title}
                       </td>
@@ -98,8 +110,8 @@ export default function Dashboard() {
         ) : (
           <>
             <div className="w-full flex justify-center mb-5">
-              <p className="text-1xl text-gray-600 bg-[#A4193D] p-4 rounded-2xl shadow-md">
-                <span className="font-semibold text-[#FFDFB9] text-center ">
+              <p className="text-1xl text-gray-600 bg-[#ffffff] p-4 rounded-2xl shadow-md">
+                <span className="font-bold mb-6 text-center text-[#a4193ece]">
                 Nenhuma tarefa adicionada
                 </span>
               </p>

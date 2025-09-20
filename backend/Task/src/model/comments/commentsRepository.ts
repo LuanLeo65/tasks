@@ -8,6 +8,11 @@ async function findAll() {
   return comments;
 }
 
+async function findByUser( id: number) {
+  const comments = await Comment.findAll({ where: { userId: id } });
+  return comments;
+}
+
 async function findAllbyTask(taskId: number) {
   await Task.findByPk(taskId);
   const comments = await Comment.findAll({ where: { taskId: taskId } });
@@ -48,4 +53,5 @@ export default {
   findAllbyTask,
   deleteComment,
   setComment,
+  findByUser
 };

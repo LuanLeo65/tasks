@@ -21,6 +21,30 @@ async function getTasks(req: Request, res: Response, next: any) {
   }
 }
 
+async function getUserTasks(req: Request, res: Response, next: any) {
+  try {
+    const userId = parseInt(req.params.userId);
+    if (!userId) {
+      res.status(400).json({ erro: "Id de usuario invalido" });
+      return;
+    }
+
+    const allUserTasks = await repository.findByUser(userId);
+    if (!allUserTasks || allUserTasks.length === 0) {
+      res
+        .status(400)
+        .json({ erro: "Nao foi possivel encontrar nada no banco de dados" });
+      return;
+    }
+    return res.status(200).json(allUserTasks);
+  } catch (error) {
+    console.log(error);
+    res
+      .status(500)
+      .json({ erro: "Ocorreu um erro ao retornar todas as tasks" });
+  }
+}
+
 async function getTaskComments(req: Request, res: Response, next: any) {
   try {
     const id = parseInt(req.params.id);
@@ -60,6 +84,7 @@ async function getTask(req: Request, res: Response, next: any) {
     res.status(500).json({ erro: "Ocorreu um erro ao procurar a tasks" });
   }
 }
+
 async function addTask(req: Request, res: Response, next: any) {
   try {
     const { userId } = res.locals.payload;
@@ -137,4 +162,5 @@ export default {
   setTask,
   deleteTask,
   getTaskComments,
+  getUserTasks,
 };

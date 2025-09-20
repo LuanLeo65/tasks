@@ -1,33 +1,47 @@
 //components/header.jsx
-import { useLocation, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import icone from "../assets/lista-de-tarefas.png";
+import apiLogin from "../services/login";
+import { useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
 
 export default function Header() {
-  const location = useLocation();
-  
-  let title = ""
+  const { user, logout } = useContext(AuthContext);
+  const token = apiLogin.getToken();
 
-  if(location.pathname === "/"){
-    title = "Tarefas"
-  }else if(location.pathname === "/addtask") {
-    title = "Adicionar Tarefa"
-  } else if(location.pathname.startsWith("/task/addcomment/")) {
-    title = "Adicionar Comentário"
-  } else if(location.pathname.startsWith("/task/details/")) {
-    title = "Detalhes da Tarefa"
-  } else if(location.pathname.startsWith("/task/set/")) {
-    title = "Editar Tarefa"
-  } else if(location.pathname.startsWith("/comment/set")) {
-    title = "Editar Comentario"
+  const navigate = useNavigate()
+
+  async function handleLogout() {
+     await logout();
+    //const userId = apiLogin.getId();
+    //await apiLogin.logout(userId);
+    //apiLogin.setToken("");
+    //apiLogin.setId("");
+    //apiLogin.setAuthor("");
+
+    navigate("/login", {replace: true});
   }
 
-  
-
   return (
-    <div className="flex mb-20 border-b-1 border-gray-400 w-screen items-center bg-[#A4193D]">
+    <>
+      {user ? ( 
+      <div className="flex items-center justify-between mb-20 border-b-1 border-gray-400 w-screen bg-[#A4193D]">
       <img src={icone} alt="Tasks" className="w-20 h-20 flex-none bg-[#A4193D]" />
-      <h1 className="text-3xl font-medium flex-auto text-center text-[#FFDFB9]">{title}</h1>
-      <div className="w-20 h-20 flex-none" />
+      <div className="flex fle-row gap-8 text-center">
+        <p onClick={() => navigate("/home")} className="text-3xl font-medium flex-auto text-center text-[#FFDFB9] hover:underline underline-offset-1 transition duration-300 cursor-pointer">Inicio</p>
+        <p onClick={() => navigate("/Task")} className="text-3xl font-medium flex-auto text-center text-[#FFDFB9] hover:underline underline-offset-1 transition duration-300 cursor-pointer">Tarefas</p>
+        <p onClick={() => navigate("/profile")} className="text-3xl font-medium flex-auto text-center text-[#FFDFB9] hover:underline underline-offset-1 transition duration-300 cursor-pointer">Perfil</p>
+      </div>
+      <a onClick={() => handleLogout()} className="text-3xl font-medium text-center text-[#FFDFB9] hover:underline underline-offset-1 transition duration-300 mr-8 cursor-pointer">Sair</a>
     </div>
+      ): (
+        <div className="flex items-center justify-between mb-20 border-b-1 border-gray-400 w-screen bg-[#A4193D]">
+           <img src={icone} alt="Tasks" className="w-20 h-20 flex-none bg-[#A4193D]" />
+            <p className="text-3xl font-medium flex-auto text-center text-[#FFDFB9]">Bem vindo ao site de Tarefas</p>
+            <div className="w-20 h-20 flex-none bg-[#A4193D]"></div>
+        </div>
+      )}
+    </>
+    
   );
 }

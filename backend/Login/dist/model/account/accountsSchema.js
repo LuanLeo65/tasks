@@ -14,10 +14,10 @@ const accountSchema = joi_1.default.object({
 });
 exports.accountSchema = accountSchema;
 const accountUpdateSchema = joi_1.default.object({
-    name: joi_1.default.string().min(3).max(50),
-    email: joi_1.default.string().email().min(8).max(50),
-    password: joi_1.default.string().min(6).max(20),
-    birth: joi_1.default.date().less("now").greater("1-1-1900"),
+    name: joi_1.default.string().min(3).max(50).optional().allow(""),
+    email: joi_1.default.string().email().min(8).max(50).optional().allow(""),
+    password: joi_1.default.string().min(6).max(20).optional().allow(""),
+    birth: joi_1.default.date().less("now").greater("1-1-1900").optional().allow(""),
 });
 exports.accountUpdateSchema = accountUpdateSchema;
 const accountLoginSchema = joi_1.default.object({

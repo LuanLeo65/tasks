@@ -8,6 +8,11 @@ async function findAll() {
   return tasks;
 }
 
+async function findByUser(id: number) {
+  const tasks = await Task.findAll({ where: { userId: id } });
+  return tasks;
+}
+
 async function findByTask(id: number) {
   const task = await Task.findByPk(id, {
     include: [{ model: Comment, as: "comments" }],
@@ -46,4 +51,4 @@ async function deleteById(id: number) {
   return await Task.destroy({ where: { id: id } });
 }
 
-export default { findAll, create, findById, set, deleteById, findByTask };
+export default { findAll, create, findById, set, deleteById, findByTask, findByUser };

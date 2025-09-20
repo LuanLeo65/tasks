@@ -1,15 +1,21 @@
-import Header from "../../components/header";
+import Header from "../../../components/header.jsx";
 import { useState } from "react";
 import { useNavigate, useParams  } from "react-router-dom";
-import apiComment from "../../services/comment.js";
+import apiComment from "../../../services/comment.js";
+import auth from "../../../services/login.js";
 
-export default function AddComment() {
+export default function SetComment() {
   const [author, setAuthor] = useState();
   const [comment, setComment] = useState();
   const [successMessage, setSuccessMessage] = useState();
 
   const navigate = useNavigate();
-  const {id: taskId} = useParams();
+  const {idTask: taskId, idComment: commentId} = useParams();
+  
+    if (!auth.isAuthenticated()) {
+      navigate('/login');
+      return;
+      }
 
   async function handleAddComment(e) {
     e.preventDefault()
@@ -24,19 +30,19 @@ export default function AddComment() {
     }
 
     try {
-      await apiComment.addComment(taskId, payload);
-      setSuccessMessage("Comentario adicionado com sucesso!");
+      await apiComment.setComment(commentId, payload);
+      setSuccessMessage("Comentario editado com sucesso!");
 
       setTimeout(() => {
         navigate(`/task/details/${taskId}`);
       }, 2000);
     } catch (error) {
-      console.log("Ocorreu um erro ao adicionar comentario:", error);
+      console.log("Ocorreu um erro ao editar comentario:", error);
     }
   }
 
   return (
-    <div className="flex flex-col w-screen h-screen items-center  bg-[#FFDFB9]">
+    <div className="flex flex-col w-screen h-screen items-center bg-[#FFDFB9]">
       <Header />
       {successMessage ? (
         <p className="text-lg text-white mt-4 bg-green-500  rounded-2xl p-5 shadow-2xl">{successMessage}</p>
@@ -46,7 +52,6 @@ export default function AddComment() {
             <label className="block mb-1 font-semibold text-gray-800">Seu Nome:</label>
             <input
               type="text"
-              value={author}
               placeholder="Digite seu nome aqui"
               className="w-full border border-gray-400 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300"
               onChange={(e) => setAuthor(e.target.value)}
@@ -57,16 +62,16 @@ export default function AddComment() {
             <label className="block mb-1 font-semibold text-gray-800">Comentário:</label>
             <textarea
               value={comment}
-              placeholder="Digite o que deseja falar sobre a tarefa"
+              placeholder="Digite o que deseja editar"
               className="w-full border border-gray-400 rounded-xl px-3 py-2 resize-y min-h-[80px] focus:outline-none focus:ring-2 focus:ring-orange-300"
               onChange={(e) => setComment(e.target.value)}
             />
           </div>
-
-          <button type="submit" className="w-full py-2 text-white font-semibold bg-green-600 hover:bg-green-700 rounded-full transition"> Enviar Comentário</button>
+          <button type="submit" className="w-full py-2 text-white font-semibold bg-green-600 hover:bg-green-700 rounded-full transition"> Editar Comentário</button>
           <a href={`/task/details/${taskId}`} className="block text-center text-blue-600 hover:underline mt-2">Voltar</a>
 
         </form>
+
       )}
     </div>
   );

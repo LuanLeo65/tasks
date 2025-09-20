@@ -11,7 +11,11 @@ router.get("/task",middlewares.validateAuthentication, taskController.getTasks);
 
 router.get("/task/comments",middlewares.validateAuthentication, commentsController.getAllComments);
 
+router.get("/task/comments/:userId",middlewares.validateAuthentication, commentsController.getAllUserComments);
+
 router.get('/task/details/:id',middlewares.validateAuthentication, taskController.getTaskComments)
+
+router.get('/userTask/:userId',middlewares.validateAuthentication, taskController.getUserTasks)
 
 router.get("/task/:id",middlewares.validateAuthentication, taskController.getTask);
 
