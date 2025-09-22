@@ -25,7 +25,7 @@ export default function baseApi(baseurl) {
       originalRequest._retry = true;
 
       try {
-        const { data } = await api.post("/account/refresh", {}, {withCredentials: true});
+        const { data } = await api.post("/account/refresh", null, {withCredentials: true});
         localStorage.setItem("token", data.token);
 
         originalRequest.headers["x-access-token"] = `${data.token}`;

@@ -21,17 +21,17 @@ export default function loginPage() {
 
     async function handleLogin(e) {
         e.preventDefault();
-
-        if(!email || !password) {
-            setError("Preencha todos os campos corretamente")
-            return;
-        }
-
+        
         const from = location.state?.from.pathname || "/home"
         
         const payload = {
             email: email,
             password: password
+        }
+        
+        if(!email || !password) {
+            setError("Preencha todos os campos corretamente")
+            return;
         }
 
         try {

@@ -111,7 +111,7 @@ async function login(req: Request, res: Response, next: any) {
 
         await refreshRepository.addRefreshToken(account.id, refresh);
 
-        res.cookie("refreshToken", refresh, { httpOnly: true, secure: false });
+        res.cookie("refreshToken", refresh, { httpOnly: true, secure: true, sameSite: "none" });
         return res.status(200).json({
           message: `Usuario ${account.name} logado com sucesso!`,
           token: token,
@@ -167,7 +167,7 @@ async function refresh(req: Request, res: Response, next: any) {
       .json({
         token: newToken,
         user: { id: user.userId },
-        name: { name: user.name },
+        name: user.name,
       });
   } catch (error) {
     console.log("Ërro ao chamar refresh:" + error);
