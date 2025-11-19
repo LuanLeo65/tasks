@@ -9,7 +9,6 @@ import {
   expect,
   beforeAll,
   afterAll,
-  beforeEach,
   afterEach,
 } from "@jest/globals";
 import { IAccount } from "../src/model/account/account";
@@ -36,10 +35,16 @@ beforeAll(async () => {
   refreshJwt = auth.refreshJWT(idTest);
 });
 
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
 afterAll(async () => {
-  await refreshRepository.deleteById(idTest);
-  await accountRepository.deleteByEmail(testEmail);
-  await accountRepository.deleteByEmail(testEmailCreate);
+  jest.restoreAllMocks();
+
+  await refreshRepository.deleteById(idTest).catch(() => {});
+  await accountRepository.deleteByEmail(testEmail).catch(() => {});
+  await accountRepository.deleteByEmail(testEmailCreate).catch(() => {});
 });
 
 describe("testando as rotas de accounts/login", () => {
@@ -57,7 +62,6 @@ describe("testando as rotas de accounts/login", () => {
 
   it("GET /accounts - Deve retornar 401", async () => {
     const result = await request(app).get("/accounts");
-
     expect(result.status).toEqual(401);
   });
 
@@ -71,7 +75,7 @@ describe("testando as rotas de accounts/login", () => {
   });
 
   it("GET /accounts - Deve retornar 500", async () => {
-    jest.spyOn(accountRepository, "getAll").mockRejectedValue(Error);
+    jest.spyOn(accountRepository, "getAll").mockRejectedValue(new Error());
 
     const result = await request(app)
       .get("/accounts")
@@ -82,7 +86,7 @@ describe("testando as rotas de accounts/login", () => {
 
   it("GET /account/:id - Deve retornar 200", async () => {
     const result = await request(app)
-      .get("/account/" + idTest)
+      .get(`/account/${idTest}`)
       .set("x-access-token", jwt);
 
     expect(result.status).toEqual(200);
@@ -107,17 +111,16 @@ describe("testando as rotas de accounts/login", () => {
     expect(result.body.error).toEqual("Usuario nao encontrado");
   });
 
-  it("GET /account:id - Deve retornar 401", async () => {
-    const result = await request(app).get("/account/" + idTest);
-
+  it("GET /account/:id - Deve retornar 401", async () => {
+    const result = await request(app).get(`/account/${idTest}`);
     expect(result.status).toEqual(401);
   });
 
   it("GET /account/:id - Deve retornar 500", async () => {
-    jest.spyOn(accountRepository, "getOne").mockRejectedValue(Error);
+    jest.spyOn(accountRepository, "getOne").mockRejectedValue(new Error());
 
     const result = await request(app)
-      .get("/accounts")
+      .get(`/account/${idTest}`)
       .set("x-access-token", jwt);
 
     expect(result.status).toEqual(500);
@@ -154,7 +157,7 @@ describe("testando as rotas de accounts/login", () => {
   });
 
   it("POST /account - Deve retornar 500", async () => {
-    jest.spyOn(accountRepository, "create").mockRejectedValue(Error);
+    jest.spyOn(accountRepository, "create").mockRejectedValue(new Error());
 
     const createPayload = {
       name: "Jest1",
@@ -223,7 +226,7 @@ describe("testando as rotas de accounts/login", () => {
   });
 
   it("POST /account/login - Deve retornar 500", async () => {
-    jest.spyOn(accountRepository, "findByEmail").mockRejectedValue(Error);
+    jest.spyOn(accountRepository, "findByEmail").mockRejectedValue(new Error());
 
     const loginPayload = {
       email: testEmail,
@@ -241,7 +244,7 @@ describe("testando as rotas de accounts/login", () => {
     } as IAccount;
 
     const result = await request(app)
-      .patch("/account/" + idTest)
+      .patch(`/account/${idTest}`)
       .send(UpdatePayload)
       .set("x-access-token", jwt);
 
@@ -249,10 +252,10 @@ describe("testando as rotas de accounts/login", () => {
     expect(result.body).toEqual("Usuário Jest12 alterado com sucesso!");
   });
 
-  it("PATCH /account/:id - Deve retornar 400", async () => {
+  it("PATCH /account/:id - Deve retornar 400 (id inválido)", async () => {
     const UpdatePayload = {
       name: "Jest12",
-    } as IAccount;
+    };
 
     const result = await request(app)
       .patch("/account/asd")
@@ -263,9 +266,9 @@ describe("testando as rotas de accounts/login", () => {
     expect(result.body.error).toEqual("Id invalido");
   });
 
-  it("PATCH /account/:id - Deve retornar 400", async () => {
+  it("PATCH /account/:id - Deve retornar 400 (body vazio)", async () => {
     const result = await request(app)
-      .patch("/account/" + idTest)
+      .patch(`/account/${idTest}`)
       .set("x-access-token", jwt);
 
     expect(result.status).toEqual(400);
@@ -275,10 +278,10 @@ describe("testando as rotas de accounts/login", () => {
   it("PATCH /account/:id - Deve retornar 401", async () => {
     const UpdatePayload = {
       name: "Jest12",
-    } as IAccount;
+    };
 
     const result = await request(app)
-      .patch("/account/" + idTest)
+      .patch(`/account/${idTest}`)
       .send(UpdatePayload);
 
     expect(result.status).toEqual(401);
@@ -287,7 +290,7 @@ describe("testando as rotas de accounts/login", () => {
   it("PATCH /account/:id - Deve retornar 404", async () => {
     const UpdatePayload = {
       name: "Jest12",
-    } as IAccount;
+    };
 
     const result = await request(app)
       .patch("/account/-1")
@@ -299,14 +302,14 @@ describe("testando as rotas de accounts/login", () => {
   });
 
   it("PATCH /account/:id - Deve retornar 500", async () => {
-    jest.spyOn(accountRepository, "set").mockRejectedValue(Error);
+    jest.spyOn(accountRepository, "set").mockRejectedValue(new Error());
 
     const UpdatePayload = {
       name: "Jest12",
-    } as IAccount;
+    };
 
     const result = await request(app)
-      .patch("/account/-1")
+      .patch(`/account/${idTest}`)
       .send(UpdatePayload)
       .set("x-access-token", jwt);
 
@@ -323,16 +326,15 @@ describe("testando as rotas de accounts/login", () => {
   });
 
   it("DELETE /account/:id - Deve retornar 401", async () => {
-    const result = await request(app).delete("/account/" + idTest);
-
+    const result = await request(app).delete(`/account/${idTest}`);
     expect(result.status).toEqual(401);
   });
 
   it("DELETE /account/:id - Deve retornar 500", async () => {
-    jest.spyOn(accountRepository, "deleteById").mockRejectedValue(Error);
+    jest.spyOn(accountRepository, "deleteById").mockRejectedValue(new Error());
 
     const result = await request(app)
-      .delete("/account/" + idTest)
+      .delete(`/account/${idTest}`)
       .set("x-access-token", jwt);
 
     expect(result.status).toEqual(500);
@@ -340,7 +342,7 @@ describe("testando as rotas de accounts/login", () => {
 
   it("POST /account/logout/:id - Deve retornar 200", async () => {
     const result = await request(app)
-      .post("/account/logout/" + idTest)
+      .post(`/account/logout/${idTest}`)
       .set("x-access-token", jwt);
 
     expect(result.status).toEqual(200);
@@ -348,24 +350,23 @@ describe("testando as rotas de accounts/login", () => {
 
   it("POST /account/logout/:id - Deve retornar 400", async () => {
     const result = await request(app)
-      .post("/account/logout/asd")
+      .post(`/account/logout/asd`)
       .set("x-access-token", jwt);
 
     expect(result.status).toEqual(400);
     expect(result.body.error).toEqual("id invalido");
   });
 
-  it("POST /account/logout/:id - Deve retornar 400", async () => {
-    const result = await request(app).post("/account/logout/" + idTest);
-
+  it("POST /account/logout/:id - Deve retornar 401", async () => {
+    const result = await request(app).post(`/account/logout/${idTest}`);
     expect(result.status).toEqual(401);
   });
 
   it("POST /account/logout/:id - Deve retornar 500", async () => {
-    jest.spyOn(refreshRepository, "deleteById").mockRejectedValue(Error);
+    jest.spyOn(refreshRepository, "deleteById").mockRejectedValue(new Error());
 
     const result = await request(app)
-      .post("/account/logout/" + idTest)
+      .post(`/account/logout/${idTest}`)
       .set("x-access-token", jwt);
 
     expect(result.status).toEqual(500);
