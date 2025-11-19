@@ -1,18 +1,15 @@
 import { Request, Response } from 'express';
-import controller from '../src/controller/task'; // Ajuste o caminho se necessário
-import repository from '../src/model/task/taskRepository'; // Ajuste o caminho se necessário
+import controller from '../src/controller/task'; 
+import repository from '../src/model/task/taskRepository'; 
 import {
   jest,
   describe,
   it,
   expect,
-  beforeAll,
-  afterAll,
-  afterEach,
   beforeEach,
 } from "@jest/globals";
 
-// Mock do repositório
+
 jest.mock('../src/model/task/taskRepository');
 const mockRepository = repository as jest.Mocked<typeof repository>;
 
