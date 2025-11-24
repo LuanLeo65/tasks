@@ -4,8 +4,12 @@
     "module": "commonjs",
     "types": ["node", "jest", "sequelize"],
     "moduleResolution": "node",
-    "baseUrl": ".",  
-    "rootDir": "./src",
+    "baseUrl": ".",
+    "paths":{
+      "commons/*": ["../__commons__/src/*"]
+    },
+
+    "rootDirs": ["./src", " ../__commons__/src" ],
     "outDir": "./dist",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,

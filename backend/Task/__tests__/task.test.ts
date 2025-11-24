@@ -1,273 +1,346 @@
+import { Request, Response } from 'express';
+import controller from '../src/controller/task'; 
+import repository from '../src/model/task/taskRepository'; 
 import {
-  beforeAll,
-  beforeEach,
-  afterEach,
-  afterAll,
+  jest,
   describe,
   it,
   expect,
-  jest,
+  beforeEach,
 } from "@jest/globals";
-import request from "supertest";
-import app from "../src/app";
-import repository from "../src/model/task/taskRepository";
-import { ITaskModel } from "../src/model/task/taskModel";
 
-const task = [
-  {
-    id: 1,
-    title: "Task 1",
-    description: "descricao task 1",
-  } as unknown as ITaskModel,
-  {
-    id: 2,
-    title: "Task 2",
-    description: "descricao task 2",
-  } as unknown as ITaskModel,
-];
 
-const taskCreated = {
-  title: "Task 1",
-  description: "descricao task 1",
-} as unknown as ITaskModel;
+jest.mock('../src/model/task/taskRepository');
+const mockRepository = repository as jest.Mocked<typeof repository>;
 
-const taskCommented = {
-  id: 1,
-  title: "Task 1",
-  description: "Descricao task 1",
-  comment: {
-    author: "autor 1",
-    comment: "comentario 1",
-  },
-} as unknown as ITaskModel;
+describe('Task Controller', () => {
+  let mockReq: Partial<Request>;
+  let mockRes: Partial<Response>;
+  let mockNext: jest.Mock;
 
-let idTask: number;
-
-beforeAll(async () => {
-  const fakeTaskParams = {
-    title: "Task 5",
-    description: "Descricao task 5",
-  } as unknown as ITaskModel;
-
-  const fakeTask = await repository.create(fakeTaskParams);
-  idTask = fakeTask.id;
-});
-
-beforeEach(() => {
-  jest.clearAllMocks();
-});
-
-afterEach(() => {
-  jest.restoreAllMocks();
-});
-
-afterAll(async () => {
-  jest.clearAllMocks();
-  await repository.deleteById(idTask);
-});
-
-describe("testando as tasks", () => {
-  it("GET /task - deve retornar 200", async () => {
-    jest.spyOn(repository, "findAll").mockResolvedValue(task);
-
-    const result = await request(app).get("/task");
-
-    expect(result.status).toBe(200);
-    expect(Array.isArray(result.body)).toBe(true);
-    expect(result.body.length).toBe(2);
+  beforeEach(() => {
+    mockReq = {};
+    mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn().mockReturnThis(),
+      sendStatus: jest.fn(),
+    } as Partial<Response>;
+    mockNext = jest.fn();
+    jest.clearAllMocks();
   });
 
-  it("GET /task - deve retornar 400, quando nao houver task", async () => {
-    jest.spyOn(repository, "findAll").mockResolvedValue([]);
+  describe('getTasks', () => {
+    it('should return all tasks with status 200', async () => {
+      const mockTasks = [{ id: 1, title: 'Task 1' }];
+      mockRepository.findAll.mockResolvedValue(mockTasks as any);
 
-    const result = await request(app).get("/task");
+      await controller.getTasks(mockReq as Request, mockRes as Response, mockNext);
 
-    expect(result.status).toBe(400);
-    expect(result.body).toHaveProperty("erro");
-  });
-
-  it("GET /task - deve retornar 500, quando houver erro interno", async () => {
-    jest.spyOn(repository, "findAll").mockRejectedValue(new Error("db error"));
-
-    const result = await request(app).get("/task");
-
-    expect(result.status).toBe(500);
-    expect(result.body).toHaveProperty("erro");
-  });
-
-  it("GET /task/:id - deve retornar 200, retornar uma task", async () => {
-    jest.spyOn(repository, "findById").mockResolvedValue(taskCreated);
-
-    const result = await request(app).get("/task/1");
-
-    expect(result.status).toBe(200);
-    expect(result.body.title).toBe("Task 1");
-  });
-
-  it("GET /task/:id - deve retornar 400, quando id for invalido", async () => {
-    jest.spyOn(repository, "findById").mockResolvedValue(taskCreated);
-
-    const result = await request(app).get("/task/asdf");
-
-    expect(result.status).toBe(400);
-    expect(result.body.erro).toBe("Id invalido");
-  });
-
-  it("GET /task/:id - deve retornar 404, quando nao houver task", async () => {
-    jest.spyOn(repository, "findById").mockResolvedValue(null);
-
-    const result = await request(app).get("/task/-1");
-
-    expect(result.status).toBe(404);
-    expect(result.body.erro).toBe("Task nao encontrada");
-  });
-
-  it("GET /task/:id - deve retornar 500, quando houver erro interno", async () => {
-    jest.spyOn(repository, "findById").mockRejectedValue(new Error("db error"));
-
-    const result = await request(app).get("/task/1");
-
-    expect(result.status).toBe(500);
-    expect(result.body).toHaveProperty("erro");
-  });
-
-  it("POST /task - deve retornar 201, criar task", async () => {
-    jest.spyOn(repository, "create").mockResolvedValue(taskCreated);
-
-    const result = await request(app).post("/task").send(taskCreated);
-
-    expect(result.status).toBe(201);
-    expect(result.body.title).toBe("Task 1");
-  });
-
-  it("POST /task - deve retornar 400, quando falha ao criar a task", async () => {
-    jest.spyOn(repository, "create").mockResolvedValue(taskCreated);
-
-    const result = await request(app).post("/task");
-
-    expect(result.status).toBe(400);
-  });
-
-  it("POST /task - deve retornar 422, informaçoes errada ao criar a task", async () => {
-    jest.spyOn(repository, "create").mockResolvedValue(taskCreated);
-
-    const result = await request(app).post("/task").send({
-      title: 1234,
-      description: 3212,
+      expect(mockRepository.findAll).toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.json).toHaveBeenCalledWith(mockTasks);
     });
 
-    expect(result.status).toBe(422);
-  });
+    it('should return 400 if no tasks found', async () => {
+      mockRepository.findAll.mockResolvedValue([]);
 
-  it("POST /task - deve retornar 500, quando houver erro interno", async () => {
-    jest.spyOn(repository, "create").mockRejectedValue(new Error("db error"));
+      await controller.getTasks(mockReq as Request, mockRes as Response, mockNext);
 
-    const result = await request(app).post("/task").send(taskCreated);
-
-    expect(result.status).toBe(500);
-    expect(result.body).toHaveProperty("erro");
-  });
-
-  it("PATCH /task/:id - deve retornar 200, atualizar task", async () => {
-    const result = await request(app)
-      .patch("/task/" + idTask)
-      .send({
-        title: "Task 4",
-        description: "descricao task 4",
-      });
-
-    expect(result.status).toBe(200);
-    expect(result.body.title).toBe("Task 4");
-  });
-
-  it("PATCH /task/:id - deve retornar 400, id invalido", async () => {
-    const result = await request(app).patch("/task/asd").send({
-      title: "Task 4",
-      description: "descricao task 4",
+      expect(mockRepository.findAll).toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Nao foi possivel encontrar nada no banco de dados' });
     });
 
-    expect(result.status).toBe(400);
-    expect(result.body.erro).toBe("Id invalido");
+    it('should return 500 on error', async () => {
+      mockRepository.findAll.mockRejectedValue(new Error('DB Error'));
+
+      await controller.getTasks(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRepository.findAll).toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Ocorreu um erro ao retornar todas as tasks' });
+    });
   });
 
-  it("PATCH /task/:id - deve retornar 422, corpo invalido", async () => {
-    const result = await request(app)
-      .patch("/task/" + idTask)
-      .send({
-        title: 32452,
-        description: 32453,
+  describe('getUserTasks', () => {
+    it('should return user tasks with status 200', async () => {
+      const mockTasks = [{ id: 1, userId: 1 }];
+      mockReq.params = { userId: '1' };
+      mockRepository.findByUser.mockResolvedValue(mockTasks as any);
+
+      await controller.getUserTasks(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRepository.findByUser).toHaveBeenCalledWith(1);
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.json).toHaveBeenCalledWith(mockTasks);
+    });
+
+    it('should return 400 for invalid userId', async () => {
+      mockReq.params = { userId: 'invalid' };
+
+      await controller.getUserTasks(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Id de usuario invalido' });
+    });
+
+    it('should return 400 if no tasks found for user', async () => {
+      mockReq.params = { userId: '1' };
+      mockRepository.findByUser.mockResolvedValue([]);
+
+      await controller.getUserTasks(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRepository.findByUser).toHaveBeenCalledWith(1);
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Nao foi possivel encontrar nada no banco de dados' });
+    });
+
+    it('should return 500 on error', async () => {
+      mockReq.params = { userId: '1' };
+      mockRepository.findByUser.mockRejectedValue(new Error('DB Error'));
+
+      await controller.getUserTasks(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRepository.findByUser).toHaveBeenCalledWith(1);
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Ocorreu um erro ao retornar todas as tasks' });
+    });
+  });
+
+  describe('getTaskComments', () => {
+    it('should return task comments with status 200', async () => {
+      const mockTask = { id: 1, comments: [] };
+      mockReq.params = { id: '1' };
+      mockRepository.findByTask.mockResolvedValue(mockTask as any);
+
+      await controller.getTaskComments(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRepository.findByTask).toHaveBeenCalledWith(1);
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.json).toHaveBeenCalledWith(mockTask);
+    });
+
+    it('should return 400 for invalid id', async () => {
+      mockReq.params = { id: 'invalid' };
+
+      await controller.getTaskComments(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Id invalido' });
+    });
+
+    it('should return 404 if task not found', async () => {
+      mockReq.params = { id: '1' };
+      mockRepository.findByTask.mockResolvedValue(null);
+
+      await controller.getTaskComments(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRepository.findByTask).toHaveBeenCalledWith(1);
+      expect(mockRes.status).toHaveBeenCalledWith(404);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Task nao encontrada' });
+    });
+
+    it('should return 500 on error', async () => {
+      mockReq.params = { id: '1' };
+      mockRepository.findByTask.mockRejectedValue(new Error('DB Error'));
+
+      await controller.getTaskComments(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRepository.findByTask).toHaveBeenCalledWith(1);
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Ocorreu um erro ao procurar a tasks' });
+    });
+  });
+
+  describe('getTask', () => {
+    it('should return task with status 200', async () => {
+      const mockTask = { id: 1, title: 'Task 1' };
+      mockReq.params = { id: '1' };
+      mockRepository.findById.mockResolvedValue(mockTask as any);
+
+      await controller.getTask(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRepository.findById).toHaveBeenCalledWith(1);
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.json).toHaveBeenCalledWith(mockTask);
+    });
+
+    it('should return 400 for invalid id', async () => {
+      mockReq.params = { id: 'invalid' };
+
+      await controller.getTask(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Id invalido' });
+    });
+
+    it('should return 404 if task not found', async () => {
+      mockReq.params = { id: '1' };
+      mockRepository.findById.mockResolvedValue(null);
+
+      await controller.getTask(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRepository.findById).toHaveBeenCalledWith(1);
+      expect(mockRes.status).toHaveBeenCalledWith(404);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Task nao encontrada' });
+    });
+
+    it('should return 500 on error', async () => {
+      mockReq.params = { id: '1' };
+      mockRepository.findById.mockRejectedValue(new Error('DB Error'));
+
+      await controller.getTask(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRepository.findById).toHaveBeenCalledWith(1);
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Ocorreu um erro ao procurar a tasks' });
+    });
+  });
+
+  describe('addTask', () => {
+    it('should create task with status 201', async () => {
+      const mockTask = { id: 1, title: 'New Task' };
+      mockReq.body = { title: 'New Task', description: 'Desc' };
+      (mockRes.locals as any) = { payload: { userId: 1, name: 'User' } };
+      mockRepository.create.mockResolvedValue(mockTask as any);
+
+      await controller.addTask(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRepository.create).toHaveBeenCalledWith({
+        ...mockReq.body,
+        userId: 1,
+        author: 'User',
       });
+      expect(mockRes.status).toHaveBeenCalledWith(201);
+      expect(mockRes.json).toHaveBeenCalledWith(mockTask);
+    });
 
-    expect(result.status).toBe(422);
+    it('should return 401 if userId missing', async () => {
+      (mockRes.locals as any) = { payload: { name: 'User' } };
+
+      await controller.addTask(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRes.sendStatus).toHaveBeenCalledWith(401);
+    });
+
+    it('should return 401 if name missing', async () => {
+      (mockRes.locals as any) = { payload: { userId: 1 } };
+
+      await controller.addTask(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRes.sendStatus).toHaveBeenCalledWith(401);
+    });
+
+    it('should return 400 if body invalid', async () => {
+      mockReq.body = null;
+      (mockRes.locals as any) = { payload: { userId: 1, name: 'User' } };
+
+      await controller.addTask(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Nao foi possivel criar a conta' });
+    });
+
+    it('should return 500 on error', async () => {
+      mockReq.body = { title: 'New Task' };
+      (mockRes.locals as any) = { payload: { userId: 1, name: 'User' } };
+      mockRepository.create.mockRejectedValue(new Error('DB Error'));
+
+      await controller.addTask(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRepository.create).toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Ocorreu um erro ao criar task' });
+    });
   });
 
-  it("PATCH /task/:id - deve retornar 400, corpo vazio", async () => {
-    const result = await request(app).patch("/task/1").send();
+  describe('setTask', () => {
+    it('should update task with status 200', async () => {
+      const mockTask = { id: 1, title: 'Updated' };
+      mockReq.params = { id: '1' };
+      mockReq.body = { title: 'Updated' };
+      mockRepository.set.mockResolvedValue(mockTask as any);
 
-    expect(result.status).toBe(400);
-    expect(result.body.erro).toBe("Nao foi possivel atualizar a conta");
+      await controller.setTask(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRepository.set).toHaveBeenCalledWith(1, mockReq.body);
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.json).toHaveBeenCalledWith(mockTask);
+    });
+
+    it('should return 400 for invalid id', async () => {
+      mockReq.params = { id: 'invalid' };
+
+      await controller.setTask(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Id invalido' });
+    });
+
+    it('should return 400 if body invalid', async () => {
+      mockReq.params = { id: '1' };
+      mockReq.body = null;
+
+      await controller.setTask(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Nao foi possivel atualizar a conta' });
+    });
+
+    it('should return 404 if task not found', async () => {
+      mockReq.params = { id: '1' };
+      mockReq.body = { title: 'Updated' };
+      mockRepository.set.mockResolvedValue(null);
+
+      await controller.setTask(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRepository.set).toHaveBeenCalledWith(1, mockReq.body);
+      expect(mockRes.status).toHaveBeenCalledWith(404);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Task nao encontrada' });
+    });
+
+    it('should return 500 on error', async () => {
+      mockReq.params = { id: '1' };
+      mockReq.body = { title: 'Updated' };
+      mockRepository.set.mockRejectedValue(new Error('DB Error'));
+
+      await controller.setTask(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRepository.set).toHaveBeenCalledWith(1, mockReq.body);
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Ocorreu um erro ao atualizar a task' });
+    });
   });
 
-  it("PATCH /task - deve retornar 500, quando houver erro interno", async () => {
-    jest.spyOn(repository, "set").mockRejectedValue(new Error("db error"));
+  describe('deleteTask', () => {
+    it('should delete task with status 204', async () => {
+      mockReq.params = { id: '1' };
+      mockRepository.deleteById.mockResolvedValue(1);
 
-    const result = await request(app)
-      .patch("/task/" + idTask)
-      .send(taskCreated);
+      await controller.deleteTask(mockReq as Request, mockRes as Response, mockNext);
 
-    expect(result.status).toBe(500);
-    expect(result.body).toHaveProperty("erro");
-  });
+      expect(mockRepository.deleteById).toHaveBeenCalledWith(1);
+      expect(mockRes.sendStatus).toHaveBeenCalledWith(204);
+    });
 
-  it("DELETE /task/:id - deve retornar 204, deletar task", async () => {
-    const result = await request(app).delete("/task/" + idTask);
+    it('should return 400 for invalid id', async () => {
+      mockReq.params = { id: 'invalid' };
 
-    expect(result.status).toBe(204);
-  });
+      await controller.deleteTask(mockReq as Request, mockRes as Response, mockNext);
 
-  it("DELETE /task/:id - deve retornar 500, quando houver erro interno", async () => {
-    jest.spyOn(repository, "deleteById").mockRejectedValue(new Error());
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Id invalido' });
+    });
 
-    const result = await request(app).delete("/task/" + idTask);
+    it('should return 500 on error', async () => {
+      mockReq.params = { id: '1' };
+      mockRepository.deleteById.mockRejectedValue(new Error('DB Error'));
 
-    expect(result.status).toBe(500);
-    expect(result.body).toHaveProperty("erro");
-  });
+      await controller.deleteTask(mockReq as Request, mockRes as Response, mockNext);
 
-  it("GET /task/all/:id - deve retornar 200, task com comentarios", async () => {
-    jest.spyOn(repository, "findByTask").mockResolvedValue(taskCommented);
-
-    const result = await request(app).get("/task/all/1");
-
-    expect(result.status).toBe(200);
-    expect(result.body).toHaveProperty("comment");
-  });
-
-  it("GET /task/all/:id - deve retornar 400, task com comentarios", async () => {
-    jest.spyOn(repository, "findByTask").mockResolvedValue(taskCommented);
-
-    const result = await request(app).get("/task/all/asd");
-
-    expect(result.status).toBe(400);
-    expect(result.body.erro).toBe("Id invalido");
-  });
-
-  it("GET /task/all/:id - deve retornar 404, task com comentarios", async () => {
-    jest.spyOn(repository, "findByTask").mockResolvedValue(null);
-
-    const result = await request(app).get("/task/all/-1");
-
-    expect(result.status).toBe(404);
-    expect(result.body.erro).toBe("Task nao encontrada");
-  });
-
-  it("GET /task/all/:id - deve retornar 500, task com comentarios", async () => {
-    jest
-      .spyOn(repository, "findByTask")
-      .mockRejectedValue(new Error("db error"));
-
-    const result = await request(app).get("/task/all/1");
-
-    expect(result.status).toBe(500);
+      expect(mockRepository.deleteById).toHaveBeenCalledWith(1);
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Ocorreu um erro ao deletar a task' });
+    });
   });
 });

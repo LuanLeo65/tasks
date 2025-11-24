@@ -1,4 +1,5 @@
 //server.ts
+
 import database from "./db";
 import app from "./app";
 import { setupAssociations } from "./model/association";

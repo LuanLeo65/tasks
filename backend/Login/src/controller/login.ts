@@ -4,20 +4,16 @@ import refreshRepository from "../model/refreshToken/refreshRepository";
 import auth, { Token } from "../auth";
 
 async function getAccounts(req: Request, res: Response, next: any) {
-  try {
     const accounts = await accountRepository.getAll();
     if (accounts.length === 0)
       return res.status(404).json({ error: "Nenhum usuario encontrado" });
 
     return res.status(200).json(accounts);
-  } catch (error) {
-    console.log("Ërro ao chamar getAccounts:" + error);
-    res.sendStatus(500);
-  }
+  
 }
 
 async function getOneAccount(req: Request, res: Response, next: any) {
-  try {
+
     const id = parseInt(req.params.id);
     if (!id) return res.status(400).json({ error: "Id invalido" });
 
@@ -26,14 +22,10 @@ async function getOneAccount(req: Request, res: Response, next: any) {
       return res.status(404).json({ error: "Usuario nao encontrado" });
 
     return res.status(200).json(account);
-  } catch (error) {
-    console.log("Ërro ao chamar getOneAccount:" + error);
-    res.sendStatus(500);
-  }
+
 }
 
 async function addAccount(req: Request, res: Response, next: any) {
-  try {
     const payload = req.body;
     if (!payload)
       return res.status(400).json({ error: "Preencha os campos corretamente" });
@@ -45,14 +37,11 @@ async function addAccount(req: Request, res: Response, next: any) {
     account.password = "";
 
     return res.status(201).json(account);
-  } catch (error) {
-    console.log("Ërro ao chamar addAccount:" + error);
-    res.sendStatus(500);
   }
-}
+
 
 async function setAccount(req: Request, res: Response, next: any) {
-  try {
+ 
     const id = parseInt(req.params.id);
     if (!id) return res.status(400).json({ error: "Id invalido" });
 
@@ -72,28 +61,21 @@ async function setAccount(req: Request, res: Response, next: any) {
     return res
       .status(200)
       .json(`Usuário ${updatedAccount.name} alterado com sucesso!`);
-  } catch (error) {
-    console.log("Ërro ao chamar setAccount:" + error);
-    res.sendStatus(500);
-  }
 }
 
 async function deleteAccount(req: Request, res: Response, next: any) {
-  try {
+
     const id = parseInt(req.params.id);
     if (!id) return res.status(400).json({ error: "Id invalido" });
 
     await accountRepository.deleteById(id);
 
     return res.status(200).json({ message: "Usuario deletado com sucesso!" });
-  } catch (error) {
-    console.log("Ërro ao chamar deleteAccount:" + error);
-    res.sendStatus(500);
-  }
+
 }
 
 async function login(req: Request, res: Response, next: any) {
-  try {
+
     const payload = req.body;
     if (!payload)
       return res.status(400).json({ error: "Preencha os campos corretamente" });
@@ -124,24 +106,15 @@ async function login(req: Request, res: Response, next: any) {
     }
 
     return res.status(400).json({ error: "Usuario ou senha invalidos" });
-  } catch (error) {
-    console.log("Ërro ao chamar login:" + error);
-    res.sendStatus(500);
-  }
 }
 
 async function logout(req: Request, res: Response, next: any) {
-  try {
     const id = parseInt(req.params.id);
     if (!id) return res.status(400).json({ error: "id invalido" });
 
     await refreshRepository.deleteById(id);
 
     res.status(200).json({ token: null });
-  } catch (error) {
-    console.log("Ërro ao chamar logout:" + error);
-    res.sendStatus(500);
-  }
 }
 
 async function refresh(req: Request, res: Response, next: any) {
@@ -154,8 +127,7 @@ async function refresh(req: Request, res: Response, next: any) {
     await refreshRepository.deleteByToken(refreshDb.token);
     return res.status(403).json({ error: "Refresh token expirado!" });
   }
-
-  try {
+  
     const user = await auth.verifyRefreshToken(refreshToken);
 
     const account = await accountRepository.getOne(user.id);
@@ -169,10 +141,7 @@ async function refresh(req: Request, res: Response, next: any) {
         user: { id: user.userId },
         name: user.name,
       });
-  } catch (error) {
-    console.log("Ërro ao chamar refresh:" + error);
-    res.sendStatus(500);
-  }
+
 }
 
 export default {

@@ -1,286 +1,324 @@
+import { Request, Response } from 'express';
+import controller from '../src/controller/comments'; 
+import repository from '../src/model/comments/commentsRepository'; 
 import {
-  beforeAll,
-  beforeEach,
-  afterEach,
-  afterAll,
+  jest,
   describe,
   it,
   expect,
-  jest,
+  afterAll,
+  beforeEach,
 } from "@jest/globals";
-import request from "supertest";
-import repositoryComment from "../src/model/comments/commentsRepository";
-import repositoryTask from "../src/model/task/taskRepository";
-import app from "../src/app";
-import { ITaskModel } from "../src/model/task/taskModel";
-import { ICommentsModel } from "../src/model/comments/commentsModel";
 
-const fakeComment = [
-  {
-    author: "Autor 1",
-    comment: "comentario 1",
-    taskId: 1,
-  } as unknown as ICommentsModel,
-  {
-    author: "Autor 2",
-    comment: "comentario 2",
-    taskId: 1,
-  } as unknown as ICommentsModel,
-];
 
-const createdComment = {
-  author: "Autor 1",
-  comment: "comentario 1",
-  taskId: 1,
-} as unknown as ICommentsModel;
+jest.mock('../src/model/comments/commentsRepository');
+const mockRepository = repository as jest.Mocked<typeof repository>;
 
-const commentUpdated = {
-  author: "Autor 3",
-  comment: "comentario 3",
-} as unknown as ICommentsModel;
 
-let idTask: number;
-let idComment: number;
+const mockConsoleLog = jest.spyOn(console, 'log').mockImplementation(() => {});
 
-beforeAll(async () => {
-  const task = {
-    title: "Task 1",
-    description: "descricao task 1",
-  } as unknown as ITaskModel;
+describe('Comments Controller', () => {
+  let mockReq: Partial<Request>;
+  let mockRes: Partial<Response>;
+  let mockNext: jest.Mock;
 
-  const fakedTask = await repositoryTask.create(task);
-  idTask = fakedTask.id;
-
-  const comment = {
-    author: "Autor 1",
-    comment: "comentario 1",
-  } as unknown as ICommentsModel;
-
-  const fakedComment = await repositoryComment.addComment(idTask, comment);
-  idComment = fakedComment.id;
-});
-
-beforeEach(() => {
-  jest.clearAllMocks();
-});
-
-afterEach(() => {
-  jest.restoreAllMocks();
-});
-
-afterAll(async () => {
-  jest.clearAllMocks();
-  await repositoryTask.deleteById(idTask);
-  await repositoryComment.deleteComment(idComment);
-});
-
-describe("Testando as rotas do comments", () => {
-  it("GET /task/:id/comments, deve retornar 200", async () => {
-    jest
-      .spyOn(repositoryComment, "findAllbyTask")
-      .mockResolvedValue(fakeComment);
-
-    const result = await request(app).get("/task/1/comments");
-
-    expect(result.status).toBe(200);
-    expect(Array.isArray(result.body)).toBeTruthy();
+  beforeEach(() => {
+    mockReq = {};
+    mockRes = {
+      status: jest.fn().mockReturnThis(), 
+      json: jest.fn().mockReturnThis(),
+      sendStatus: jest.fn(),
+    } as Partial<Response>;
+    mockNext = jest.fn();
+    jest.clearAllMocks();
   });
 
-  it("GET /task/:id/comments, deve retornar 400, id invalido", async () => {
-    jest
-      .spyOn(repositoryComment, "findAllbyTask")
-      .mockResolvedValue(fakeComment);
-
-    const result = await request(app).get("/task/asd/comments");
-
-    expect(result.status).toBe(400);
-    expect(result.body.erro).toBe("Id invalido");
+  afterAll(() => {
+    mockConsoleLog.mockRestore(); 
   });
 
-  it("GET /task/:id/comments, deve retornar 404, id nao encontrado", async () => {
-    jest.spyOn(repositoryComment, "findAllbyTask").mockResolvedValue([]);
+  describe('getAllComments', () => {
+    it('should return all comments with status 200', async () => {
+      const mockComments = [{ id: 1, comment: 'Comment 1' }];
+      mockRepository.findAll.mockResolvedValue(mockComments as any);
 
-    const result = await request(app).get("/task/-1/comments");
+      await controller.getAllComments(mockReq as Request, mockRes as Response, mockNext);
 
-    expect(result.status).toBe(404);
-    expect(result.body.erro).toBe("Task nao encontrada");
-  });
-
-  it("GET /task/:id/comments, deve retornar 500, erro interno", async () => {
-    jest
-      .spyOn(repositoryComment, "findAllbyTask")
-      .mockRejectedValue(new Error());
-
-    const result = await request(app).get("/task/1/comments");
-
-    expect(result.status).toBe(500);
-  });
-
-  it("POST /task/:id/comments, deve retornar 201", async () => {
-    jest
-      .spyOn(repositoryComment, "addComment")
-      .mockResolvedValue(createdComment);
-
-    const result = await request(app).post("/task/1/comments").send({
-      author: "Autor 1",
-      comment: "comentario 1",
+      expect(mockRepository.findAll).toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.json).toHaveBeenCalledWith(mockComments);
     });
 
-    expect(result.status).toBe(201);
-    expect(result.body.author).toBe("Autor 1");
-  });
+    it('should return 404 if no comments found', async () => {
+      mockRepository.findAll.mockResolvedValue([]);
 
-  it("POST /task/:id/comments, deve retornar 400", async () => {
-    jest
-      .spyOn(repositoryComment, "addComment")
-      .mockResolvedValue(createdComment);
+      await controller.getAllComments(mockReq as Request, mockRes as Response, mockNext);
 
-    const result = await request(app).post("/task/asdf/comments").send({
-      author: "Autor 1",
-      comment: "comentario 1",
+      expect(mockRepository.findAll).toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(404);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Nao foi possivel encontrar nenhum comentario' });
     });
 
-    expect(result.status).toBe(400);
-    expect(result.body.erro).toBe("Id invalido");
+    it('should return 500 on error', async () => {
+      mockRepository.findAll.mockRejectedValue(new Error('DB Error'));
+
+      await controller.getAllComments(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRepository.findAll).toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Erro ao retornar todos os comentarios' });
+    });
   });
 
-  it("POST /task/:id/comments, deve retornar 422", async () => {
-    jest
-      .spyOn(repositoryComment, "addComment")
-      .mockResolvedValue(createdComment);
+  describe('getAllUserComments', () => {
+    it('should return user comments with status 200', async () => {
+      const mockComments = [{ id: 1, userId: 1 }];
+      mockReq.params = { userId: '1' };
+      mockRepository.findByUser.mockResolvedValue(mockComments as any);
 
-    const result = await request(app).post("/task/asdf/comments").send({
-      author: 2345234,
-      comment: 23453,
+      await controller.getAllUserComments(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRepository.findByUser).toHaveBeenCalledWith(1);
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.json).toHaveBeenCalledWith(mockComments);
     });
 
-    expect(result.status).toBe(422);
-  });
+    it('should return 400 for invalid userId', async () => {
+      mockReq.params = { userId: 'invalid' };
 
-  it("POST /task/:id/comments, deve retornar 400", async () => {
-    jest
-      .spyOn(repositoryComment, "addComment")
-      .mockResolvedValue(createdComment);
+      await controller.getAllUserComments(mockReq as Request, mockRes as Response, mockNext);
 
-    const result = await request(app).post("/task/1/comments").send();
-
-    expect(result.status).toBe(400);
-    expect(result.body.erro).toBe("Informações invalidas");
-  });
-
-  it("POST /task/:id/comments, deve retornar 500, erro interno", async () => {
-    jest.spyOn(repositoryComment, "addComment").mockRejectedValue(new Error());
-
-    const result = await request(app).post("/task/1/comments").send({
-      author: "Autor 1",
-      comment: "comentario 1",
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Id de usuario invalido' });
     });
 
-    expect(result.status).toBe(500);
-  });
+    it('should return 404 if no comments found for user', async () => {
+      mockReq.params = { userId: '1' };
+      mockRepository.findByUser.mockResolvedValue([]);
 
-  it("GET /task/comments, deve retornar 200", async () => {
-    const result = await request(app).get("/task/comments");
+      await controller.getAllUserComments(mockReq as Request, mockRes as Response, mockNext);
 
-    expect(result.status).toBe(200);
-    expect(Array.isArray(result.body)).toBeTruthy();
-  });
-
-  it("GET /task/comments, deve retornar 404", async () => {
-    jest.spyOn(repositoryComment, "findAll").mockResolvedValue([]);
-
-    const result = await request(app).get("/task/comments");
-
-    expect(result.status).toBe(404);
-    expect(result.body.erro).toBe(
-      "Nao foi possivel encontrar nenhum comentario"
-    );
-  });
-
-  it("GET /task/comments, deve retornar 500", async () => {
-    jest.spyOn(repositoryComment, "findAll").mockRejectedValue(new Error());
-
-    const result = await request(app).get("/task/comments");
-
-    expect(result.status).toBe(500);
-  });
-
-  it("DELETE /task/comments, deve retornar 204", async () => {
-    const result = await request(app).delete("/task/comments/" + idComment);
-
-    expect(result.status).toBe(204);
-  });
-
-  it("DELETE /task/comments, deve retornar 400", async () => {
-    const result = await request(app).delete("/task/comments/asd");
-
-    expect(result.status).toBe(400);
-    expect(result.body.erro).toBe("Id invalido");
-  });
-
-  it("PATCH /task/:id/comments, deve retornar 201", async () => {
-    jest
-      .spyOn(repositoryComment, "setComment")
-      .mockResolvedValue(commentUpdated);
-    const result = await request(app)
-      .patch(`/task/2/comments/`)
-      .send(commentUpdated);
-
-    expect(result.status).toBe(201);
-    expect(result.body.author).toBe("Autor 3");
-  });
-
-  it("PATCH /task/:id/comments, deve retornar 422", async () => {
-    jest
-      .spyOn(repositoryComment, "setComment")
-      .mockResolvedValue(commentUpdated);
-    const result = await request(app).patch(`/task/2/comments/`).send({
-      author: 23452,
-      comment: 3452,
+      expect(mockRepository.findByUser).toHaveBeenCalledWith(1);
+      expect(mockRes.status).toHaveBeenCalledWith(404);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Nao foi possivel encontrar nenhum comentario' });
     });
 
-    expect(result.status).toBe(422);
+    it('should return 500 on error', async () => {
+      mockReq.params = { userId: '1' };
+      mockRepository.findByUser.mockRejectedValue(new Error('DB Error'));
+
+      await controller.getAllUserComments(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRepository.findByUser).toHaveBeenCalledWith(1);
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Erro ao retornar todos os comentarios' });
+    });
   });
 
-  it("PATCH /task/:id/comments, deve retornar 400- Id invalido", async () => {
-    jest
-      .spyOn(repositoryComment, "setComment")
-      .mockResolvedValue(commentUpdated);
-    const result = await request(app)
-      .patch(`/task/asdf/comments/`)
-      .send(commentUpdated);
+  describe('getCommentsOfTask', () => {
+    it('should return comments of task with status 200', async () => {
+      const mockComments = [{ id: 1, taskId: 1 }];
+      mockReq.params = { taskId: '1' };
+      mockRepository.findAllbyTask.mockResolvedValue(mockComments as any);
 
-    expect(result.status).toBe(400);
-    expect(result.body.erro).toBe("Id invalido");
+      await controller.getCommentsOfTask(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRepository.findAllbyTask).toHaveBeenCalledWith(1);
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.json).toHaveBeenCalledWith(mockComments);
+    });
+
+    it('should return 400 for invalid taskId', async () => {
+      mockReq.params = { taskId: 'invalid' };
+
+      await controller.getCommentsOfTask(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Id invalido' });
+    });
+
+    it('should return 404 if no comments found for task', async () => {
+      mockReq.params = { taskId: '1' };
+      mockRepository.findAllbyTask.mockResolvedValue([]);
+
+      await controller.getCommentsOfTask(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRepository.findAllbyTask).toHaveBeenCalledWith(1);
+      expect(mockRes.status).toHaveBeenCalledWith(404);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Task nao encontrada' });
+    });
+
+    it('should return 500 on error', async () => {
+      mockReq.params = { taskId: '1' };
+      mockRepository.findAllbyTask.mockRejectedValue(new Error('DB Error'));
+
+      await controller.getCommentsOfTask(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRepository.findAllbyTask).toHaveBeenCalledWith(1);
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Erro ao retornar o comentario dessa task' });
+    });
   });
 
-  it("PATCH /task/:id/comments, deve retornar 400, corpo invalido", async () => {
-    jest
-      .spyOn(repositoryComment, "setComment")
-      .mockResolvedValue(commentUpdated);
-    const result = await request(app).patch(`/task/2/comments/`).send();
+  describe('addComment', () => {
+    it('should add comment with status 201', async () => {
+      const mockComment = { id: 1, comment: 'New Comment' };
+      mockReq.params = { taskId: '1' };
+      mockReq.body = { comment: 'New Comment' };
+      (mockRes.locals as any) = { payload: { userId: 1, name: 'User' } };
+      mockRepository.addComment.mockResolvedValue(mockComment as any);
 
-    expect(result.status).toBe(400);
-    expect(result.body.erro).toBe("Informacoes invalidas");
+      await controller.addComment(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRepository.addComment).toHaveBeenCalledWith(1, {
+        ...mockReq.body,
+        userId: 1,
+        author: 'User',
+      });
+      expect(mockRes.status).toHaveBeenCalledWith(201);
+      expect(mockRes.json).toHaveBeenCalledWith(mockComment);
+    });
+
+    it('should return 400 for invalid taskId', async () => {
+      mockReq.params = { taskId: 'invalid' };
+      (mockRes.locals as any) = { payload: { userId: 1, name: 'User' } };
+
+      await controller.addComment(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Id invalido' });
+    });
+
+    it('should return 401 if userId missing', async () => {
+      mockReq.params = { taskId: '1' };
+      (mockRes.locals as any) = { payload: { name: 'User' } };
+
+      await controller.addComment(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRes.sendStatus).toHaveBeenCalledWith(401);
+    });
+
+    it('should return 401 if name missing', async () => {
+      mockReq.params = { taskId: '1' };
+      (mockRes.locals as any) = { payload: { userId: 1 } };
+
+      await controller.addComment(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRes.sendStatus).toHaveBeenCalledWith(401);
+    });
+
+    it('should return 400 if body invalid', async () => {
+      mockReq.params = { taskId: '1' };
+      mockReq.body = null;
+      (mockRes.locals as any) = { payload: { userId: 1, name: 'User' } };
+
+      await controller.addComment(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Informações invalidas' });
+    });
+
+    it('should return 500 on error', async () => {
+      mockReq.params = { taskId: '1' };
+      mockReq.body = { comment: 'New Comment' };
+      (mockRes.locals as any) = { payload: { userId: 1, name: 'User' } };
+      mockRepository.addComment.mockRejectedValue(new Error('DB Error'));
+
+      await controller.addComment(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRepository.addComment).toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Erro ao adicionar o comentario' });
+    });
   });
 
-  it("PATCH /task/:id/comments, deve retornar 404, comentario nao encontrado", async () => {
-    const result = await request(app)
-      .patch(`/task/-1/comments/`)
-      .send(commentUpdated);
+  describe('deleteComment', () => {
+    it('should delete comment with status 204', async () => {
+      mockReq.params = { id: '1' };
+      mockRepository.deleteComment.mockResolvedValue(1);
 
-    expect(result.status).toBe(404);
-    expect(result.body.erro).toBe("Comentario nao encontrado");
+      await controller.deleteComment(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRepository.deleteComment).toHaveBeenCalledWith(1);
+      expect(mockRes.sendStatus).toHaveBeenCalledWith(204);
+    });
+
+    it('should return 400 for invalid id', async () => {
+      mockReq.params = { id: 'invalid' };
+
+      await controller.deleteComment(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Id invalido' });
+    });
+
+    it('should return 500 on error', async () => {
+      mockReq.params = { id: '1' };
+      mockRepository.deleteComment.mockRejectedValue(new Error('DB Error'));
+
+      await controller.deleteComment(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRepository.deleteComment).toHaveBeenCalledWith(1);
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Erro ao deletar o comentario' });
+    });
   });
 
-  it("PATCH /task/:id/comments, deve retornar 500, erro interno", async () => {
-    jest
-      .spyOn(repositoryComment, "setComment")
-      .mockRejectedValue(new Error("db error"));
-    const result = await request(app)
-      .patch(`/task/2/comments/`)
-      .send(commentUpdated);
+  describe('setComment', () => {
+    it('should update comment with status 201', async () => {
+      const mockComment = { id: 1, comment: 'Updated' };
+      mockReq.params = { id: '1' };
+      mockReq.body = { comment: 'Updated' };
+      mockRepository.setComment.mockResolvedValue(mockComment as any);
 
-    expect(result.status).toBe(500);
+      await controller.setComment(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRepository.setComment).toHaveBeenCalledWith(1, mockReq.body);
+      expect(mockRes.status).toHaveBeenCalledWith(201);
+      expect(mockRes.json).toHaveBeenCalledWith(mockComment);
+    });
+
+    it('should return 400 for invalid id', async () => {
+      mockReq.params = { id: 'invalid' };
+
+      await controller.setComment(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Id invalido' });
+    });
+
+    it('should return 400 if body invalid', async () => {
+      mockReq.params = { id: '1' };
+      mockReq.body = null;
+
+      await controller.setComment(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Informacoes invalidas' });
+    });
+
+    it('should return 404 if comment not found', async () => {
+      mockReq.params = { id: '1' };
+      mockReq.body = { comment: 'Updated' };
+      mockRepository.setComment.mockResolvedValue(null);
+
+      await controller.setComment(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRepository.setComment).toHaveBeenCalledWith(1, mockReq.body);
+      expect(mockRes.status).toHaveBeenCalledWith(404);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Comentario nao encontrado' });
+    });
+
+    it('should return 500 on error', async () => {
+      mockReq.params = { id: '1' };
+      mockReq.body = { comment: 'Updated' };
+      mockRepository.setComment.mockRejectedValue(new Error('DB Error'));
+
+      await controller.setComment(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRepository.setComment).toHaveBeenCalledWith(1, mockReq.body);
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Erro ao deletar o comentario' }); 
+    });
   });
 });
