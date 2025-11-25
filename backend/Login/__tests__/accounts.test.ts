@@ -354,7 +354,7 @@ describe("testando as rotas de accounts/login", () => {
       .set("x-access-token", jwt);
 
     expect(result.status).toEqual(400);
-    expect(result.body.error).toEqual("id invalido");
+    expect(result.body.error).toEqual("Id invalido");
   });
 
   it("POST /account/logout/:id - Deve retornar 401", async () => {

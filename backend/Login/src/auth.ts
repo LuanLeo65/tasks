@@ -5,6 +5,8 @@ import fs from "fs";
 import path from "path";
 import jwt from "jsonwebtoken";
 import { IRefresh } from "./model/refreshToken/refresh";
+import { UnauthorizedError } from "commons/models/errors/UnauthorizedError";
+import { InvalidPayloadError } from "commons/models/errors/InvalidPayloadError";
 
 const privateKey = fs.readFileSync(
   path.join(__dirname, "../keys/private.key"),
@@ -49,7 +51,7 @@ export type Token = { userId: number; name: string; jwt?: string };
 function verifyJWT(req: Request, res: Response, next: any) {
   try {
     const token = req.headers["x-access-token"] as string;
-    if (!token) return res.sendStatus(401);
+    if (!token) return next(new UnauthorizedError("Unauthorized error"));
 
     const decoded: Token = jwt.verify(token, publicKey, {
       algorithms: [jwtAlgorithm],
@@ -61,7 +63,7 @@ function verifyJWT(req: Request, res: Response, next: any) {
     next();
   } catch (error) {
     console.log("Erro na validacao do jwt" + error);
-    res.sendStatus(401);
+    return next(new UnauthorizedError("Unauthorized error"));
   }
 }
 
@@ -84,7 +86,7 @@ function validateSchema(
   const { details } = error;
   const message = details.map((item) => item.message).join(",");
 
-  return res.status(422).json({ error: req.body, message });
+  return next(new InvalidPayloadError(`${ req.body, message}`));
 }
 
 export default {

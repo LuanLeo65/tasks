@@ -1,12 +1,16 @@
 import { Request, Response } from "express";
 import accountRepository from "../model/account/accountRepository";
 import refreshRepository from "../model/refreshToken/refreshRepository";
-import auth, { Token } from "../auth";
+import auth from "../auth";
+import {ReqParamNotFoundError} from 'commons/models/errors/ReqParamNotFoundError';
+import { ForbidenError } from "commons/models/errors/ForbidenError";
+import { NotFoundError } from "commons/models/errors/NotFoundError";
+import { PayloadNotFoundError } from "commons/models/errors/PayloadNotFoundError";
 
 async function getAccounts(req: Request, res: Response, next: any) {
     const accounts = await accountRepository.getAll();
     if (accounts.length === 0)
-      return res.status(404).json({ error: "Nenhum usuario encontrado" });
+      return next(new NotFoundError('Nenhum usuario encontrado'));
 
     return res.status(200).json(accounts);
   
@@ -15,11 +19,11 @@ async function getAccounts(req: Request, res: Response, next: any) {
 async function getOneAccount(req: Request, res: Response, next: any) {
 
     const id = parseInt(req.params.id);
-    if (!id) return res.status(400).json({ error: "Id invalido" });
+    if (!id) return next(new ReqParamNotFoundError("id", "Id invalido"));
 
     const account = await accountRepository.getOne(id);
     if (!account)
-      return res.status(404).json({ error: "Usuario nao encontrado" });
+      return next(new NotFoundError(`Usuario nao encontrado`));
 
     return res.status(200).json(account);
 
@@ -28,7 +32,7 @@ async function getOneAccount(req: Request, res: Response, next: any) {
 async function addAccount(req: Request, res: Response, next: any) {
     const payload = req.body;
     if (!payload)
-      return res.status(400).json({ error: "Preencha os campos corretamente" });
+      return next(new PayloadNotFoundError('Preencha os campos corretamente'));
 
     const hash = auth.hash(payload.password);
     payload.password = hash;
@@ -43,11 +47,11 @@ async function addAccount(req: Request, res: Response, next: any) {
 async function setAccount(req: Request, res: Response, next: any) {
  
     const id = parseInt(req.params.id);
-    if (!id) return res.status(400).json({ error: "Id invalido" });
+     if (!id) return next(new ReqParamNotFoundError("id", "Id invalido"));
 
     const payloadUpdated = req.body;
     if (!payloadUpdated)
-      return res.status(400).json({ error: "Preencha os campos corretamente" });
+      return next(new PayloadNotFoundError('Preencha os campos corretamente'));
 
     if (payloadUpdated.password) {
       const hash = auth.hash(payloadUpdated.password);
@@ -56,7 +60,7 @@ async function setAccount(req: Request, res: Response, next: any) {
 
     const updatedAccount = await accountRepository.set(id, payloadUpdated);
     if (!updatedAccount)
-      return res.status(404).json({ error: "Usuario nao encontrado" });
+      return next(new NotFoundError(`Usuario nao encontrado`));
 
     return res
       .status(200)
@@ -66,7 +70,7 @@ async function setAccount(req: Request, res: Response, next: any) {
 async function deleteAccount(req: Request, res: Response, next: any) {
 
     const id = parseInt(req.params.id);
-    if (!id) return res.status(400).json({ error: "Id invalido" });
+     if (!id) return next(new ReqParamNotFoundError("id", "Id invalido"));
 
     await accountRepository.deleteById(id);
 
@@ -78,7 +82,7 @@ async function login(req: Request, res: Response, next: any) {
 
     const payload = req.body;
     if (!payload)
-      return res.status(400).json({ error: "Preencha os campos corretamente" });
+      return next(new PayloadNotFoundError('Preencha os campos corretamente'));
 
     const account = await accountRepository.findByEmail(payload.email);
 
@@ -102,15 +106,15 @@ async function login(req: Request, res: Response, next: any) {
         });
       }
 
-      return res.status(400).json({ error: "Usuario ou senha invalidos" });
+      return next(new PayloadNotFoundError("Usuario ou senha invalidos"));
     }
 
-    return res.status(400).json({ error: "Usuario ou senha invalidos" });
+    return next(new PayloadNotFoundError("Usuario ou senha invalidos"));
 }
 
 async function logout(req: Request, res: Response, next: any) {
     const id = parseInt(req.params.id);
-    if (!id) return res.status(400).json({ error: "id invalido" });
+     if (!id) return next(new ReqParamNotFoundError("id", "Id invalido"));
 
     await refreshRepository.deleteById(id);
 
@@ -119,19 +123,20 @@ async function logout(req: Request, res: Response, next: any) {
 
 async function refresh(req: Request, res: Response, next: any) {
   const refreshToken = req.cookies.refreshToken;
-  if (!refreshToken) return res.sendStatus(403);
+  if (!refreshToken) return next(new ForbidenError('Function refresh - refreshToken'))
 
   const refreshDb = await refreshRepository.getRefreshToken(refreshToken);
-  if (!refreshDb) return res.sendStatus(403);
+  if (!refreshDb) return next(new ForbidenError('Function refresh - refreshDb'))
+
   if (refreshDb.expires_At < new Date()) {
     await refreshRepository.deleteByToken(refreshDb.token);
-    return res.status(403).json({ error: "Refresh token expirado!" });
+    return  next(new ForbidenError('Refresh token expirado'));
   }
   
     const user = await auth.verifyRefreshToken(refreshToken);
 
     const account = await accountRepository.getOne(user.id);
-    if (!account) return res.sendStatus(403);
+    if (!account) return next(new ForbidenError('Function refresh - account'));
 
     const newToken = auth.signJWT(account.id, account.name);
     res

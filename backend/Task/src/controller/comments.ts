@@ -2,6 +2,7 @@
 import { Response, Request } from "express";
 import commentRepository from "../model/comments/commentsRepository";
 import { IComments } from "src/model/comments/comments";
+import { ReqParamNotFoundError } from "commons/models/errors/ReqParamNotFoundError";
 
 async function getAllComments(req: Request, res: Response, next: any) {
   try {

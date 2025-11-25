@@ -88,8 +88,8 @@ describe('Comments Controller', () => {
 
       await controller.getAllUserComments(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.json).toHaveBeenCalledWith({ erro: 'Id de usuario invalido' });
+      expect(mockRes.status).toEqual(400);
+      expect(mockRes.json).toHaveBeenCalledWith({ error: "Id invalido" });
     });
 
     it('should return 404 if no comments found for user', async () => {
