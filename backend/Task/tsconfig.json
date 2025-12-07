@@ -9,7 +9,7 @@
       "commons/*": ["../__commons__/src/*"]
     },
 
-    "rootDirs": ["./src", " ../__commons__/src" ],
+    "rootDirs": ["./src", "../__commons__/src" ],
     "outDir": "./dist",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,

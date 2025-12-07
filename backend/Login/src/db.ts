@@ -4,11 +4,9 @@ const nameDb = process.env.DB_NAME!;
 const userDb = process.env.DB_USER!;
 const passwordDb = process.env.DB_PASSWORD;
 const hostDb = process.env.DB_HOST;
-const portDb = parseInt(`${process.env.PORT_DB}`);
 
 const database = new Sequelize(nameDb, userDb, passwordDb, {
   dialect: "mysql",
-  port: portDb,
   host: hostDb,
 });
 

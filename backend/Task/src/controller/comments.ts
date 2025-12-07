@@ -3,88 +3,49 @@ import { Response, Request } from "express";
 import commentRepository from "../model/comments/commentsRepository";
 import { IComments } from "src/model/comments/comments";
 import { ReqParamNotFoundError } from "commons/models/errors/ReqParamNotFoundError";
+import { PayloadNotFoundError } from "commons/models/errors/PayloadNotFoundError";
+import { NotFoundError } from "commons/models/errors/NotFoundError";
+import { UnauthorizedError } from "commons/models/errors/UnauthorizedError";
 
 async function getAllComments(req: Request, res: Response, next: any) {
-  try {
     const comments = await commentRepository.findAll();
-    if (comments.length === 0 || !comments) {
-      return res
-        .status(404)
-        .json({ erro: "Nao foi possivel encontrar nenhum comentario" });
-    }
+    if (comments.length === 0 || !comments) return next(new NotFoundError("Nenhum comentario encontrado"));
+
     return res.status(200).json(comments);
-  } catch (error) {
-    console.log(error);
-    return res
-      .status(500)
-      .json({ erro: "Erro ao retornar todos os comentarios" });
-  }
 }
 
 async function getAllUserComments(req: Request, res: Response, next: any) {
-  try {
     const userId = parseInt(req.params.userId);
-    if (!userId) {
-      res.status(400).json({ erro: "Id de usuario invalido" });
-      return;
-    }
+    if (!userId) return next(new ReqParamNotFoundError("userId", "Id invalido"));
 
     const userComments = await commentRepository.findByUser(userId);
-    if (userComments.length === 0 || !userComments) {
-      return res
-        .status(404)
-        .json({ erro: "Nao foi possivel encontrar nenhum comentario" });
-    }
+    if (userComments.length === 0 || !userComments) return next(new NotFoundError("Nenhum comentario encontrado para este usuario"));
+
     return res.status(200).json(userComments);
-  } catch (error) {
-    console.log(error);
-    return res
-      .status(500)
-      .json({ erro: "Erro ao retornar todos os comentarios" });
-  }
 }
 
 async function getCommentsOfTask(req: Request, res: Response, next: any) {
-  try {
     const id = parseInt(req.params.taskId);
-    if (!id) {
-      res.status(400).json({ erro: "Id invalido" });
-      return;
-    }
+    if (!id) return next(new ReqParamNotFoundError("taskId", "Id invalido"));
 
     const commentsTask = await commentRepository.findAllbyTask(id);
-    if (commentsTask.length === 0 || !commentsTask) {
-      return res.status(404).json({ erro: "Task nao encontrada" });
-    }
+    if (commentsTask.length === 0 || !commentsTask) return next(new NotFoundError("Nenhum comentario encontrado para esta task"));
 
     return res.status(200).json(commentsTask);
-  } catch (error: any) {
-    console.log(error);
-    return res
-      .status(500)
-      .json({ erro: "Erro ao retornar o comentario dessa task" });
-  }
 }
 
 async function addComment(req: Request, res: Response, next: any) {
-  try {
     const id = parseInt(req.params.taskId);
-    if (!id) {
-      res.status(400).json({ erro: "Id invalido" });
-      return;
-    }
+    if (!id) return next(new ReqParamNotFoundError("taskId", "Id invalido"));
 
     const { userId } = res.locals.payload;
-    if (!userId) return res.sendStatus(401);
+    if (!userId) return next(new UnauthorizedError("Usuario nao autorizado"));
 
     const { name } = res.locals.payload;
-    if (!name) return res.sendStatus(401);
+    if (!name) return next(new UnauthorizedError("Usuario nao autorizado"));
 
     const commentsParams = req.body;
-    if (!commentsParams) {
-      res.status(400).json({ erro: "Informações invalidas" });
-      return;
-    }
+    if (!commentsParams) return next(new PayloadNotFoundError("Preencha os campos corretamente"));
 
     commentsParams.userId = userId;
     commentsParams.author = name;
@@ -93,55 +54,32 @@ async function addComment(req: Request, res: Response, next: any) {
     console.log(comment);
 
     return res.status(201).json(comment);
-  } catch (error: any) {
-    console.log(error);
-    return res.status(500).json({ erro: "Erro ao adicionar o comentario" });
-  }
 }
 
 async function deleteComment(req: Request, res: Response, next: any) {
-  try {
     const id = parseInt(req.params.id);
-    if (!id) {
-      res.status(400).json({ erro: "Id invalido" });
-      return;
-    }
+    if (!id) return next(new ReqParamNotFoundError("id", "Id invalido"));
 
     await commentRepository.deleteComment(id);
 
     return res.sendStatus(204);
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({ erro: "Erro ao deletar o comentario" });
-  }
 }
 
 async function setComment(req: Request, res: Response, next: any) {
-  try {
     const id = parseInt(req.params.id);
-    if (!id) {
-      res.status(400).json({ erro: "Id invalido" });
-      return;
-    }
+    if (!id) return next(new ReqParamNotFoundError("id", "Id invalido"));
 
     const commentsParams = req.body as IComments;
-    if (!commentsParams) {
-      return res.status(400).json({ erro: "Informacoes invalidas" });
-    }
+    if (!commentsParams) return next(new PayloadNotFoundError("Preencha os campos corretamente"));
 
     const commentUpdated = await commentRepository.setComment(
       id,
       commentsParams
     );
 
-    if (commentUpdated === null) {
-      return res.status(404).json({ erro: "Comentario nao encontrado" });
-    }
+    if (commentUpdated === null) return next(new NotFoundError("Comentario nao encontrado"));
+    
     return res.status(201).json(commentUpdated);
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({ erro: "Erro ao deletar o comentario" });
-  }
 }
 
 export default {

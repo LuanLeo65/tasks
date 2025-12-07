@@ -1,0 +1,60 @@
+version: "3.9"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - appnet
+
+  api-login:
+    build: ./api_login
+    container_name: api_login
+    restart: always
+    ports:
+      - "${PORT_LOGIN}:${PORT_LOGIN}"
+    environment:
+      PORT: ${PORT_LOGIN}
+      DB_HOST: ${DB_HOST}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      SALT_ROUNDS: ${SALT_ROUNDS}
+      REFRESH_KEY: ${REFRESH_KEY}
+    depends_on:
+      - mysql
+    networks:
+      - appnet
+
+  api-task:
+    build: ./api_task
+    container_name: api_task
+    restart: always
+    ports:
+      - "${PORT_TASK}:${PORT_TASK}"
+    environment:
+      PORT: ${PORT_TASK}
+      DB_HOST: ${DB_HOST}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    depends_on:
+      - mysql
+    networks:
+      - appnet
+
+networks:
+  appnet:
+
+volumes:
+  mysql_data:

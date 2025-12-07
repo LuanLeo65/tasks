@@ -1,3 +1,4 @@
+import "dotenv/config";
 import app from "./app";
 import database from "./db";
 import { setupAssociations } from "./model/association";

@@ -1,5 +1,5 @@
 //server.ts
-
+import "dotenv/config";
 import database from "./db";
 import app from "./app";
 import { setupAssociations } from "./model/association";

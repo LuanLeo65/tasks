@@ -3,6 +3,8 @@ import { Request, Response } from "express";
 import Joi from "joi";
 import fs from "fs";
 import path from "path";
+import { UnauthorizedError } from "commons/models/errors/UnauthorizedError";
+import { InvalidPayloadError } from "commons/models/errors/InvalidPayloadError";
 
 export type Token = { userId: number; name: string; jwt?: string };
 const publicKey = fs.readFileSync(
@@ -25,16 +27,13 @@ function validateSchemas(
   const message = details.map((item) => item.message).join(",");
 
   console.log(`validateSchema: ${message}`);
-  return res.status(422).json({
-    error: req.body,
-    message,
-  });
+  return next(new InvalidPayloadError(message));
 }
 
 async function verifyJWT(req: Request, res: Response, next: any) {
   try {
     const token = req.headers["x-access-token"] as string;
-    if (!token) return res.sendStatus(401);
+    if (!token) return next(new UnauthorizedError("Unauthorized error"));
 
     const decoded: Token = jwt.verify(token, publicKey, {
       algorithms: [jwtAlgorithm],
@@ -51,11 +50,11 @@ async function verifyJWT(req: Request, res: Response, next: any) {
     next();
   } catch (error) {
     if (error instanceof JsonWebTokenError) {
-      return res.sendStatus(401);
+      return next(new UnauthorizedError("Unauthorized error"));
     }
 
     console.log("Erro no verifyJWT" + error);
-    res.sendStatus(401);
+    return next(new UnauthorizedError("Unauthorized error"));
   }
 }
 
