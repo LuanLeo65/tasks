@@ -194,10 +194,3 @@ Coloque `private.key` e `public.key` em `backend/Login/keys/` (apenas para desen
 4. Quando access token expira, o frontend chama `POST /account/refresh` com refresh token para obter novo access token.
 5. Logout remove refresh token do banco.
 
----
-
-## Licença
-
-Projeto de exemplo — usar conforme necessário. Considere adicionar uma licença (MIT) caso queira compartilhar publicamente.
-
----
