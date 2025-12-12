@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "start": "tsc && ts-node -r tsconfig-paths/register -r dotenv/config ./dist/Task/src/server.js",
     "build": "tsc",
-    "dev": "ts-node-dev --respawn --transpile-only -r dotenv/config ./dist/server.js",
+    "dev": "ts-node-dev -r tsconfig-paths/register --respawn --transpile-only  -r dotenv/config ./dist/Task/src/server.js",
     "test": "jest --coverage --detectOpenHandles"
   },
   "keywords": [],
@@ -21,7 +22,8 @@
     "sequelize": "^6.37.7",
     "ts-jest": "^29.4.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "tsconfig-paths": "^4.2.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",

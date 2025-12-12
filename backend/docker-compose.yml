@@ -17,8 +17,19 @@ services:
     networks:
       - appnet
 
+  commons:
+    build:
+      context: ./__commons__
+      dockerfile: Dockerfile
+    container_name: commons
+    image: commons:latest
+
   api-login:
-    build: ./api_login
+    build:
+      context: ./Login
+      dockerfile: Dockerfile
+      additional_context:
+         commons: ./__commons__
     container_name: api_login
     restart: always
     ports:
@@ -37,7 +48,11 @@ services:
       - appnet
 
   api-task:
-    build: ./api_task
+    build:
+      context: ./Task
+      dockerfile: Dockerfile
+      additional_context:
+         commons: ./__commons__
     container_name: api_task
     restart: always
     ports:

@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "tsc && ts-node -r dotenv/config ./dist/server.js",
-    "compile": "tsc && ts-node -r dotenv/config ./dist/server.js",
+    "start": "tsc && ts-node -r tsconfig-paths/register -r dotenv/config ./dist/Login/src/server.js",
+    "compile": "tsc && ts-node -r tsconfig-paths/register -r dotenv/config ./dist/Login/src/server.js",
     "dev": "nodemon -e ts,json --ignore dist --exec \"npm run compile\"",
     "test": "jest --detectOpenHandles"
   },
@@ -24,7 +24,9 @@
     "nodemon": "^3.1.10",
     "sequelize": "^6.37.7",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "tsconfig-paths": "^4.2.0"
+
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",

@@ -8,7 +8,7 @@ import { InvalidPayloadError } from "commons/models/errors/InvalidPayloadError";
 
 export type Token = { userId: number; name: string; jwt?: string };
 const publicKey = fs.readFileSync(
-  path.join(__dirname, "../keys/public.key"),
+  path.join(__dirname, "../../../keys/public.key"),
   "utf8"
 );
 const jwtAlgorithm = "RS256";
