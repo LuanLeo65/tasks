@@ -34,6 +34,11 @@ async function addAccount(req: Request, res: Response, next: any) {
     if (!payload)
       return next(new PayloadNotFoundError('Preencha os campos corretamente'));
 
+    const emailExists = await accountRepository.findByEmail(payload.email);
+    if (emailExists) {
+      return next(new PayloadNotFoundError('Email ja cadastrado'));
+    }
+
     const hash = auth.hash(payload.password);
     payload.password = hash;
 

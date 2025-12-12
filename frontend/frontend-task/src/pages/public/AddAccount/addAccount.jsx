@@ -36,7 +36,7 @@ export default function AddAccountPage() {
       navigate("/login")
     } catch (error) {
       console.log(error)
-      setError(`${error.response?.data?.message || "Erro ao criar conta. Tente novamente."}`)
+      setError(`${error.response?.data?.error || "Erro ao criar conta. Tente novamente."}`)
       setLoading(false)
     }
   }
