@@ -95,7 +95,7 @@ export default function Details() {
                       Solicitado por: <span className="font-semibold text-slate-700">{task.author}</span>
                     </span>
                   </div>
-                  <button
+                  {task.userId == id && (<button
                     onClick={() => handleNavigate(`/task/set/${task.id}`)}
                     className="flex items-center gap-2 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200 font-medium"
                   >
@@ -109,6 +109,7 @@ export default function Details() {
                     </svg>
                     Editar Tarefa
                   </button>
+                )}
                 </div>
               </div>
 
